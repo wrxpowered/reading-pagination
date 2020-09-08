@@ -1,0 +1,123 @@
+//标题
+$headline-font-size: (
+  xs: 24px,
+  s:  26px,
+  m:  28px,
+  l:  30px,
+  xl: 32px
+);
+
+$headline-level-baseline: (
+  level-1: 0,
+  level-2: -1,
+  level-3: -2
+);
+
+$headline: (
+  xs: (
+    line-height: 34px,
+  ),
+  s: (
+    line-height: 38px,
+  ),
+  m: (
+    line-height: 40px,
+  ),
+  l: (
+    line-height: 44px,
+  ),
+  xl: (
+    line-height: 48px,
+  )
+);
+
+$headline-levels: (
+  level-1: (
+    padding-top: 26px,
+    padding-bottom: 26px,
+    text-align: center
+  ),
+  level-2: (
+    padding-top: 20px,
+    padding-bottom: 20px,
+    text-align: left
+  ),
+  level-3: (
+    padding-top: 10px,
+    padding-bottom: 10px,
+    text-align: left
+  )
+);
+
+
+
+//段落
+$paragraph-font-size: (
+  xs: 16px,
+  s:  18px,
+  m:  20px,
+  l:  22px,
+  xl: 24px
+);
+
+$paragraph: (
+  xs: (
+    line-height: 32px,
+    margin-bottom: 18px
+  ),
+  s: (
+    line-height: 36px,
+    margin-bottom: 20px
+  ),
+  m: (
+    line-height: 40px,
+    margin-bottom: 22px
+  ),
+  l: (
+    line-height: 44px,
+    margin-bottom: 24px
+  ),
+  xl: (
+    line-height: 48px,
+    margin-bottom: 26px
+  )
+);
+
+
+
+//插图
+$illus-size: (
+  xs: 80%,
+  x:  82%,
+  m:  85%,
+  l:  90%,
+  xl: 95%
+);
+
+$illus: (
+  xs: (
+    padding-top: 12px,
+    padding-bottom: 12px,
+    margin-bottom: 14px
+  ),
+  s: (
+    padding-top: 14px,
+    padding-bottom: 14px,
+    margin-bottom: 16px
+  ),
+  m: (
+    padding-top: 16px,
+    padding-bottom: 16px,
+    margin-bottom: 18px
+  ),
+  l: (
+    padding-top: 18px,
+    padding-bottom: 18px,
+    margin-bottom: 20px
+  ),
+  xl: (
+    padding-top: 20px,
+    padding-bottom: 20px,
+    margin-bottom: 22px
+  )
+)

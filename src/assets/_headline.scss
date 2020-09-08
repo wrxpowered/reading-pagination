@@ -1,0 +1,31 @@
+@mixin headline-basic {
+  position: relative;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  text-autospace: ideograph-alpha;
+  hyphens: auto;
+}
+
+
+@each $size, $map in $headline {
+  .headline-#{$size} {
+    @include headline-basic;
+
+    @each $prop, $value in $map {
+      #{$prop}: map-get($map, $prop);
+    }
+  }
+
+  @each $level-name, $level-style in $headline-levels {
+    .headline-#{$size}.headline-#{$level-name} {
+      @each $level-prop, $level-value in $level-style {
+        #{$level-prop}: map-get($level-style, $level-prop)
+      }
+
+      $font-size: map-get($headline-font-size, $size);
+      $level: map-get($headline-level-baseline, $level-name);
+
+      font-size: $font-size + $level;
+    }
+  }
+}

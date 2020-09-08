@@ -1,0 +1,19 @@
+@mixin paragraph-basic {
+  position: relative;
+  text-indent: 2em;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  text-autospace: ideograph-alpha;
+  hyphens: auto;
+}
+
+
+@each $size, $map in $paragraph {
+  .paragraph-#{$size} {
+    @include paragraph-basic;
+    font-size: map-get($paragraph-font-size, $size);
+    @each $prop, $value in $map {
+      #{$prop}: map-get($map, $prop);
+    }
+  }
+}
