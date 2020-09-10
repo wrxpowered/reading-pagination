@@ -21,7 +21,7 @@ module.exports = merge(webpackConfig, {
 
     plugins: [
       new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, '../src/index.html'),
+        template: path.resolve(__dirname, '../public/index.html'),
         title: 'Reading Pagination',
         filename: 'index.html'
       }),
