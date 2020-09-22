@@ -5,6 +5,10 @@ function isArrayType(arg) {
   return Object.prototype.toString.call(arg) === '[object Array]';
 }
 
+function isNumberType(arg) {
+  return Object.prototype.toString.call(arg) === '[object Number]';
+}
+
 
 function isTextualItem(type) {
   return type === FORMAT.PARAGRAPH || type === FORMAT.HEADLINE;
@@ -44,7 +48,7 @@ function checkPagebreakData(item) {
 }
 
 
-function handleTrimText(text) {
+function removeExtraTextSpace(text) {
   return text.replace(/\s+/g, ' ');
 }
 
@@ -195,12 +199,13 @@ function checkViewportDom() {
 
 export {
   isArrayType,
+  isNumberType,
   isTextualItem,
   checkParagraphData,
   checkHeadlineData,
   checkIllusData,
   checkPagebreakData,
-  handleTrimText,
+  removeExtraTextSpace,
   handleCellSplit,
   getBoundaryHeight,
   getBoxModelValue,

@@ -1,12 +1,17 @@
-import { SIZE_LEVELS, ILLUS_RATIO } from './configs';
+import {
+  SIZE_LEVELS,
+  ILLUS_RATIO,
+  NON_BLANK_CHAR_REG_EXP
+} from './configs';
 import {
   isArrayType,
+  isNumberType,
   isTextualItem,
   checkParagraphData,
   checkHeadlineData,
   checkIllusData,
   checkPagebreakData,
-  handleTrimText,
+  removeExtraTextSpace,
   getBoundaryHeight,
   getBoxModelValue,
   createInlineStyleString,
@@ -458,7 +463,7 @@ Layout.prototype = {
     // 数据过滤
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
-        i.data.text = handleTrimText(i.data.text);
+        i.data.text = removeExtraTextSpace(i.data.text);
         i.className = this.getParagraphClassName();
         html += createHtmlString(
           'div',
@@ -467,7 +472,7 @@ Layout.prototype = {
         );
         return true;
       } else if (checkHeadlineData(i)) {
-        i.data.text = handleTrimText(i.data.text);
+        i.data.text = removeExtraTextSpace(i.data.text);
         i.className = this.getHeadlineClassName(i.data.level);
         html += createHtmlString(
           'div',
@@ -633,6 +638,11 @@ Layout.prototype = {
 
 
 
+  /**
+   * 文本分割
+   * @param {Object} item 
+   * @param {Array} lineRange [lineFrom, lineTo] 或 [lineFrom]
+   */
   handleTextDivision: function (item, lineRange) {
     const split = handleCellSplit(item.data.text);
     var element = createElement(
@@ -642,14 +652,25 @@ Layout.prototype = {
     );
     this.dom.viewport.appendChild(element);
 
-
-    let line;
-    let posFrom = 0, posTo = split.length, text = '';
+    // 获取一个非空白符的字符索引
+    function getValidCharIndex(index, direction) {
+      if (index < 0) {
+        return 0;
+      } else if (index > split.length - 1) {
+        return split.length - 1;
+      }
+      if (split.group[index].match(NON_BLANK_CHAR_REG_EXP)) {
+        return index;
+      } else {
+        return getValidCharIndex(index + direction, direction);
+      }
+    }
 
     function guessPos(targetLine) {
-      let startPos = 0,
-        endPos = split.length,
-        halfPos = Math.floor((startPos + endPos) / 2);
+      let line;
+      let startPos = 0;
+      let endPos = split.length;
+      let halfPos = getValidCharIndex(Math.floor((startPos + endPos) / 2), -1);
 
       line = Math.ceil(
         (element.childNodes[halfPos].offsetTop - item.baseline.paddingTop) / item.baseline.computedLineHeight
@@ -658,10 +679,11 @@ Layout.prototype = {
       while (line !== targetLine) {
         if (line < targetLine) {
           startPos = halfPos;
+          halfPos = getValidCharIndex(Math.floor((startPos + endPos) / 2), 1);
         } else if (line > targetLine) {
           endPos = halfPos;
+          halfPos = getValidCharIndex(Math.floor((startPos + endPos) / 2), -1);
         }
-        halfPos = Math.floor((startPos + endPos) / 2);
         line = Math.ceil(
           (element.childNodes[halfPos].offsetTop - item.baseline.paddingTop) / item.baseline.computedLineHeight
         );
@@ -669,27 +691,35 @@ Layout.prototype = {
 
       let pos = halfPos;
       while (element.childNodes[pos].offsetLeft > 0) {
-        pos--;
+        if (pos < 0) {
+          pos = 0;
+          break;
+        }
+        pos = getValidCharIndex(pos - 1, -1);
       }
       return pos;
     }
 
-    if (lineRange.length === 2) {
-      if (lineRange[0] === 0) {
-        // 截取前半部分
-        posTo = guessPos(lineRange[1]);
-      } else {
-        // 截取中间部分
-        posFrom = guessPos(lineRange[0]);
-        posTo = guessPos(lineRange[1]);
+    try {
+      let charFrom = 0, charTo = split.length;
+      if (lineRange.length === 2) {
+        if (lineRange[0] === 0) {
+          // 截取文本前半部分
+          charTo = guessPos(lineRange[1]);
+        } else {
+          // 截取文本中间部分
+          charFrom = guessPos(lineRange[0]);
+          charTo = guessPos(lineRange[1]);
+        }
+      } else if (lineRange.length === 1) {
+        // 截取文本后半部分
+        charFrom = guessPos(lineRange[0]);
       }
-    } else if (lineRange.length === 1) {
-      // 截取后半部分
-      posFrom = guessPos(lineRange[0]);
+      return split.group.slice(charFrom, charTo).join('');
+    } catch (error) {
+      this.log(`Item ${item.id} text division: boundary guess is out of edge.`);
+      return item.data.text;
     }
-
-    text = split.group.slice(posFrom, posTo).join('');
-    return text;
   },
 
 
@@ -697,10 +727,11 @@ Layout.prototype = {
   /**
    * 提取页面中的纯文本
    * @param {number} pageIndex 页码索引
+   * @param {number} textLength 指定最大文本长度
    * @param {string} separator 分隔符
    * @returns {string|null}
    */
-  extractTextFromPage: function (pageIndex, separator = ' ') {
+  extractTextFromPage: function (pageIndex, textLength, separator = ' ') {
     if (this.pageGroup.length === 0) {
       this.log('nothing to extract.');
       return null;
@@ -719,57 +750,64 @@ Layout.prototype = {
     let dividedQueue = [];
     let undividedPos = [0, lastItemIndex + 1];
 
+    // 确认文本分割点
     if (page.boundaryFrom.paginated) {
-      // 截取后半部分
+      // 页面起点分割：截取段落后半部分
       undividedPos[0]++;
       dividedQueue.push({
         id: firstItem.id,
         index: 0,
+        item: firstItem,
         lineRange: [firstItem.linesOffset + 1]
       });
     }
-
     if (page.boundaryTo.paginated) {
       undividedPos[1]--;
       let line = lastItem.linesOffset + lastItem.lines;
-      if (page.boundaryFrom.id === page.boundaryTo.id) {
-        // 截取中间部分
+      if (
+        page.boundaryFrom.paginated
+        && page.boundaryFrom.id === page.boundaryTo.id
+      ) {
+        // 页面首尾分割：截取段落中间部分
         dividedQueue[0].lineRange.push(line + 1);
       } else {
-        // 截取前半部分
+        // 页面结尾分割：截取段落前半部分
         dividedQueue.push({
           id: lastItem.id,
           index: lastItemIndex,
+          item: lastItem,
           lineRange: [0, line + 1]
         });
       }
     }
 
+    // 处理未分割段落的文本内容
     let undividedContent = page.items.slice(undividedPos[0], undividedPos[1])
       .filter(i => isTextualItem(i.type))
       .map(i => i.data.text)
       .join(separator);
 
+    // handle text of divided paragraph
     if (dividedQueue.length === 2) {
       textArr.push(this.handleTextDivision(
-        page.items[dividedQueue[0].index],
+        dividedQueue[0].item,
         dividedQueue[0].lineRange
       ));
       textArr.push(undividedContent);
       textArr.push(this.handleTextDivision(
-        page.items[dividedQueue[1].index],
+        dividedQueue[1].item,
         dividedQueue[1].lineRange
       ));
     } else if (dividedQueue.length === 1) {
       if (dividedQueue[0].lineRange[0] === 0) {
         textArr.push(undividedContent);
         textArr.push(this.handleTextDivision(
-          page.items[dividedQueue[0].index],
+          dividedQueue[0].item,
           dividedQueue[0].lineRange
         ));
       } else {
         textArr.push(this.handleTextDivision(
-          page.items[dividedQueue[0].index],
+          dividedQueue[0].item,
           dividedQueue[0].lineRange
         ));
         textArr.push(undividedContent);
@@ -778,10 +816,18 @@ Layout.prototype = {
       textArr.push(undividedContent);
     }
 
+    // 重置 DOM
     this.dom.viewport.innerHTML = '';
-    return textArr.filter(i => !!i).join(separator);
-  },
 
+    // 拼接文本
+    const text = textArr.filter(i => !!i).join(separator);
+    var concatText = removeExtraTextSpace(text);
+    if (isNumberType(textLength)) {
+      concatText = concatText.slice(0, textLength);
+    }
+
+    return concatText;
+  },
 }
 
 

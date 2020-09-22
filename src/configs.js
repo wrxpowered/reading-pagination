@@ -48,6 +48,12 @@ const ILLUS_RATIO = {
 const WORD_SPLIT_REG_EXP = /(\w+)|([\s]+)|(\S)/g;
 
 
+/**
+ * 非空白符
+ */
+const NON_BLANK_CHAR_REG_EXP = /\S/;
+
+
 export {
   VIEWPORT_DOM,
   FORMAT,
@@ -55,4 +61,5 @@ export {
   HEADLINE_LEVELS,
   ILLUS_RATIO,
   WORD_SPLIT_REG_EXP,
+  NON_BLANK_CHAR_REG_EXP,
 }
