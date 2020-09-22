@@ -121,13 +121,6 @@ Layout.prototype = {
     const lines = Math.ceil(textHeight / lineHeight);
     const actualLineHeight = textHeight / lines;
 
-    let minContainableHeight;
-    if (lines === 1) {
-      minContainableHeight = lineHeight + paddingV;
-    } else {
-      minContainableHeight = lineHeight + paddingTop;
-    }
-
     return {
       paddingTop,
       paddingBottom,
@@ -139,9 +132,9 @@ Layout.prototype = {
 
       lineHeight,
       textHeight: textHeight,
-      minContainableHeight: minContainableHeight,
+      minContainableHeight: lineHeight + paddingTop,
       contentHeight: height,
-      minContentHeight: height + paddingV,
+      minContentHeight: height + paddingTop,
       completeHeight: height + paddingV + marginBottom,
     }
   },
