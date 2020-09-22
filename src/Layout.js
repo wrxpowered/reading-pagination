@@ -683,14 +683,22 @@ Layout.prototype = {
       }
 
       let pos = halfPos;
-      while (element.childNodes[pos].offsetLeft > 0) {
+      let currentLine = Math.ceil(
+        (element.childNodes[pos].offsetTop - item.baseline.paddingTop)
+        / item.baseline.computedLineHeight
+      )
+      while (currentLine >= targetLine) {
         if (pos < 0) {
           pos = 0;
           break;
         }
         pos = getValidCharIndex(pos - 1, -1);
+        currentLine = Math.ceil(
+          (element.childNodes[pos].offsetTop - item.baseline.paddingTop)
+          / item.baseline.computedLineHeight
+        );
       }
-      return pos;
+      return getValidCharIndex(pos + 1, 1);
     }
 
     try {
