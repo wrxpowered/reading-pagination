@@ -11,7 +11,10 @@
 @each $size, $map in $paragraph {
   .paragraph-#{$size} {
     @include paragraph-basic;
+
     font-size: map-get($paragraph-font-size, $size);
+    min-height: map-get($map, "line-height");
+
     @each $prop, $value in $map {
       #{$prop}: map-get($map, $prop);
     }
