@@ -11,7 +11,7 @@
   .headline-#{$size} {
     @include headline-basic;
 
-    min-height: map-get($map, "line-height");
+    min-height: map-get($headline-font-size, $size);
 
     @each $prop, $value in $map {
       #{$prop}: map-get($map, $prop);
