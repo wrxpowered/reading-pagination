@@ -51,7 +51,7 @@ const WORD_SPLIT_REG_EXP = /(\w+)|([\s]+)|(\S)/g;
 /**
  * 非空白符
  */
-const NON_BLANK_CHAR_REG_EXP = /\S/;
+const NON_BLANK_CHAR_REG_EXP = /\S/g;
 
 
 export {

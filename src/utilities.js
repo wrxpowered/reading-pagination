@@ -18,6 +18,7 @@ function isTextualItem(type) {
 function checkParagraphData(item) {
   return (
     item.type === FORMAT.PARAGRAPH
+    && item.id
     && item.data
   );
 }
@@ -26,6 +27,7 @@ function checkParagraphData(item) {
 function checkHeadlineData(item) {
   return (
     item.type === FORMAT.HEADLINE
+    && item.id
     && item.data
     && HEADLINE_LEVELS.indexOf(item.data.level) > -1
   );
@@ -35,6 +37,7 @@ function checkHeadlineData(item) {
 function checkIllusData(item) {
   return (
     item.type === FORMAT.ILLUS
+    && item.id
     && item.data
     && item.data.img
     && item.data.img.origWidth
