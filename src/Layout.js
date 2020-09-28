@@ -444,8 +444,6 @@ Layout.prototype = {
    * @returns {Array} 排版后的数据
    */
   render: function (data) {
-    console.time('render in'); // 计时开始
-
     if (!isArrayType(data)) {
       this.log('param is not an array in the render method.');
       return;
@@ -455,8 +453,8 @@ Layout.prototype = {
       return;
     }
 
-    const isInitComplete = this.init();
-    if (!isInitComplete) { return; }
+    const isEnvReady = this.checkEnvironment();
+    if (!isEnvReady) { return; }
 
     var html = '';
     // 数据过滤
@@ -522,15 +520,14 @@ Layout.prototype = {
     this.handlePagebreak(true);
 
     this.dom.viewport.innerHTML = '';
-    console.timeEnd('render in');  // 计时结束
     return this.pageGroup;
   },
 
 
   /**
-   * 初始化
+   * 检查环境
    */
-  init: function () {
+  checkEnvironment: function () {
     if (!checkBrowserEnvironment()) {
       this.log('web browser environment is not detected.');
       return false;
@@ -581,35 +578,54 @@ Layout.prototype = {
 
   /**
    * 查找段落
-   * @param {number|string} itemId
+   * @param {string} itemId
    * @param {number} charOffset 字符偏移量
-   * @returns {null|number} 返回匹配结果，页码索引或 null (未匹配)
+   * @returns {number|null} 返回匹配结果，页码索引或 null (未匹配)
    */
   findItem: function (itemId, charOffset) {
     const pagePosition = this.pageMap[itemId];
-    if (typeof pagePosition === 'undefined') { return null; }
-    if (typeof pagePosition === 'number') {
+    if (typeof pagePosition === 'undefined') {
+      this.log('item not found.');
+      return null;
+    }
+
+    if (isNumberType(pagePosition)) {
       return pagePosition;
-    } else {
+    } else if (isArrayType(pagePosition)) {
       if (charOffset) {
         charOffset = parseInt(charOffset, 10);
+        if (!isNumberType(charOffset) || charOffset < 0) {
+          this.log('invalid charOffset.');
+          return null;
+        }
 
-        const arr = pagePosition.map(pageIndex => {
-          return this.extractFromPage(pageIndex);
-        });
-
-        const result = arr.filter(division => {
-          if (division.itemTo.paginated) {
-            return charOffset <= division.itemTo.charOffset;
-          } else {
-            return true;
+        const edges = pagePosition.map(pageIndex => this.extractFromPage(pageIndex));
+        const result = edges.filter(division => {
+          if (
+            itemId === division.itemFrom.id
+            && division.itemFrom.paginated
+          ) {
+            return (
+              charOffset >= division.itemFrom.charFrom
+              && charOffset <= division.itemFrom.charTo
+            );
+          } else if (
+            itemId === division.itemTo.id
+            && division.itemTo.paginated
+          ) {
+            return (
+              charOffset >= division.itemTo.charFrom
+              && charOffset <= division.itemTo.charTo
+            );
           }
+          return false;
         });
         if (result.length > 0) {
           return result[0].pageIndex;
         }
+        this.log('charOffset is not matched.');
+        return pagePosition[0];
       }
-      this.log('charOffset is not matched.');
       return pagePosition[0];
     }
   },
@@ -618,15 +634,14 @@ Layout.prototype = {
   /**
    * 查找有效的段落
    * 指定 itemId 未找到时，尝试匹配一个有效 itemId
-   * @param {number|string} itemId
+   * @param {string} itemId
+   * @param {number} charOffset 字符偏移量
    * @returns {number|null} 返回匹配结果，页码索引或 null (未匹配)
    */
-  findValidItem: function (itemId) {
-    const pageIndex = this.findItem(itemId);
-    if (typeof pageIndex === 'number') {
-      return pageIndex;
+  findValidItem: function (itemId, charOffset) {
+    if (isNumberType(this.pageMap[itemId])) {
+      return this.pageMap[itemId];
     }
-
     // 未找到对应段落时，尝试向后匹配最相邻的段落
     const value = parseInt(itemId, 10);
     let result = null;
@@ -650,7 +665,7 @@ Layout.prototype = {
         }
       }
     }
-    return this.findItem(result);
+    return this.findItem(result, charOffset);
   },
 
 
@@ -933,6 +948,7 @@ Layout.prototype = {
     this.dom.viewport.innerHTML = '';
 
     return {
+      pageIndex,
       itemFrom,
       itemTo,
       textualItems: textArr
