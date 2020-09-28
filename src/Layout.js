@@ -324,6 +324,12 @@ Layout.prototype = {
           this.pageMap[item.id] = page.index;
         } else {
           /* 添加到当前页并处理分页 */
+          if (page.items.length === 0) {
+            page.boundaryFrom = {
+              id: item.id,
+              type: item.type
+            }
+          }
           this.paginateText(item);
         }
       } else {
