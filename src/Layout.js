@@ -357,23 +357,16 @@ Layout.prototype = {
   handleIllus: function (rawItem, node) {
     const baseline = this.getGraphicElementBaseline(node, rawItem.data.img);
     const {
-      zoomedWidth,
-      zoomedHeight,
       minContainableHeight,
       contentHeight,
       completeHeight
     } = baseline;
 
-    let img = Object.assign({}, rawItem.data.img, {
-      zoomedWidth,
-      zoomedHeight
-    });
-
     let item = Object.assign({}, rawItem, {
       height: completeHeight,
       offset: 0,
       baseline: baseline,
-      data: Object.assign({}, rawItem.data, { img })
+      data: rawItem.data
     });
 
     let page = this.pageGroup[this.pageGroup.length - 1];
@@ -811,7 +804,7 @@ Layout.prototype = {
     const { textualItems } = this.extractFromPage(pageIndex);
 
     // 拼接文本
-    const text = textualItems.filter(i => !!i).join(separator);
+    const text = textualItems.join(separator);
     var concatText = removeExtraTextSpace(text);
     if (isNumberType(textLength)) {
       concatText = concatText.slice(0, textLength);
