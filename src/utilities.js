@@ -170,8 +170,8 @@ function createIllusHtml(item) {
       {
         'src': item.data.img.src,
         'style': createInlineStyleString({
-          'width': `${item.data.img.zoomedWidth}px`,
-          'height': `${item.data.img.zoomedHeight}px`
+          'width': `${item.baseline.zoomedWidth}px`,
+          'height': `${item.baseline.zoomedHeight}px`
         })
       }
     )
