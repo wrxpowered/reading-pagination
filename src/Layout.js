@@ -140,6 +140,21 @@ Layout.prototype = {
   },
 
 
+  calculateZoomedSize: function (img) {
+    const origWidth = parseInt(img.origWidth, 10);
+    const origHeight = parseInt(img.origHeight, 10);
+
+    const width = this.viewportSize.w * ILLUS_RATIO[this.size];
+    let fitRatio = width / origWidth;
+    if (fitRatio > 1) { fitRatio = 1; }
+
+    return {
+      zoomedWidth: Math.floor(origWidth * fitRatio),
+      zoomedHeight: Math.floor(origHeight * fitRatio)
+    }
+  },
+
+
   getGraphicElementBaseline: function (element, img) {
     const origWidth = parseInt(img.origWidth, 10);
     const origHeight = parseInt(img.origHeight, 10);
@@ -431,26 +446,47 @@ Layout.prototype = {
   },
 
 
+  handleRenderIllus: function (i, isPrecomputed) {
+    if (isPrecomputed) {
+      const size = this.calculateZoomedSize(i.data.img);
+      return createHtmlString(
+        'div',
+        { 'class': i.className },
+        createHtmlString(
+          'img',
+          {
+            'src': i.data.img.src,
+            'style': createInlineStyleString({
+              'width': `${size.zoomedWidth}px`,
+              'height': `${size.zoomedHeight}px`
+            })
+          }
+        )
+      );
+    }
+    return createHtmlString(
+      'div',
+      { 'class': i.className },
+    );
+  },
+
+
+  handleRenderPagebreak: function (isPrecomputed) {
+    if (isPrecomputed) {
+      this.log(`pagebreak will be ignored when render without pagination.`);
+      return '';
+    }
+    return createHtmlString('div');
+  },
+
+
   /**
-   * 排版渲染
-   * @param {Array} data 源数据
-   * @returns {Array} 排版后的数据
+   * 初始化待排版内容
+   * @param {array} data 
+   * @param {boolean} isPrecomputed 
    */
-  render: function (data) {
-    if (!isArrayType(data)) {
-      this.log('param is not an array in the render method.');
-      return;
-    }
-    if (data.length === 0) {
-      this.log('there is nothing to render.');
-      return;
-    }
-
-    const isEnvReady = this.checkEnvironment();
-    if (!isEnvReady) { return; }
-
+  init: function (data, isPrecomputed) {
     var html = '';
-    // 数据过滤
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
@@ -472,21 +508,45 @@ Layout.prototype = {
         return true;
       } else if (checkIllusData(i)) {
         i.className = this.getIllusClassName();
-        html += createHtmlString(
-          'div',
-          { 'class': i.className },
-        );
+        html += this.handleRenderIllus(i, isPrecomputed);
         return true;
       } else if (checkPagebreakData(i)) {
-        html += createHtmlString('div');
+        html += this.handleRenderPagebreak(isPrecomputed);
         return true;
       }
       this.log(`an illegal format item of index:${index} is among data that will be ignored.`);
       return false;
     });
+    return html;
+  },
+
+
+  checkBeforeRender: function (data) {
+    if (!isArrayType(data)) {
+      this.log('param is not an array in the render method.');
+      return false;
+    }
+    if (data.length === 0) {
+      this.log('there is nothing to render.');
+      return false;
+    }
+    if (!this.checkEnvironment()) { 
+      return false;
+    }
+    return true;
+  },
+
+
+  /**
+   * 分页排版渲染
+   * @param {Array} data 源数据
+   * @returns {Array} 排版后的数据
+   */
+  render: function (data) {
+    if (!this.checkBeforeRender(data)) { return null; }
 
     // 生成 html 字符串，添加至 DOM
-    this.dom.viewport.innerHTML = html;
+    this.dom.viewport.innerHTML = this.init(data, false);
 
     // 排版分页
     this.pushEmptyPage();
@@ -518,7 +578,18 @@ Layout.prototype = {
 
 
   /**
-   * 检查环境
+   * 竖向排版
+   * @param {Array} data 源数据
+   * @returns {string} 排版后的 html 字符串
+   */
+  renderWithoutPagination: function (data) {
+    if (!this.checkBeforeRender(data)) { return null; }
+    return this.init(data, true);
+  },
+
+
+  /**
+   * 环境检查
    */
   checkEnvironment: function () {
     if (!checkBrowserEnvironment()) {
