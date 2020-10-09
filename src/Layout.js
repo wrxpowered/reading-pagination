@@ -872,10 +872,11 @@ Layout.prototype = {
    * @returns {string|null}
    */
   extractTextFromPage: function (pageIndex, separator = ' ', textLength) {
-    const { textualItems } = this.extractFromPage(pageIndex);
+    const result = this.extractFromPage(pageIndex);
+    if (result === null) { return ''; }
 
     // 拼接文本
-    const text = textualItems.join(separator);
+    const text = result.textualItems.join(separator);
     var concatText = removeExtraTextSpace(text);
     if (isNumberType(textLength)) {
       concatText = concatText.slice(0, textLength);
