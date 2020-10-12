@@ -450,7 +450,7 @@ Layout.prototype = {
       const size = this.calculateZoomedSize(i.data.img);
       return createHtmlString(
         'div',
-        { 'class': i.className },
+        { 'class': i.className, 'data-id': i.id },
         createHtmlString(
           'img',
           {
@@ -465,7 +465,7 @@ Layout.prototype = {
     }
     return createHtmlString(
       'div',
-      { 'class': i.className },
+      { 'class': i.className, 'data-id': i.id },
     );
   },
 
@@ -492,7 +492,7 @@ Layout.prototype = {
         i.className = this.getParagraphClassName();
         html += createHtmlString(
           'div',
-          { 'class': i.className },
+          { 'class': i.className, 'data-id': i.id },
           i.data.text
         );
         return true;
@@ -501,7 +501,7 @@ Layout.prototype = {
         i.className = this.getHeadlineClassName(i.data.level);
         html += createHtmlString(
           'div',
-          { 'class': i.className },
+          { 'class': i.className, 'data-id': i.id },
           i.data.text
         );
         return true;
