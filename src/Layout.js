@@ -550,7 +550,7 @@ Layout.prototype = {
         return true;
       } else if (checkPagebreakData(i)) {
         html += this._initPagebreakData(isPrecomputed);
-        return true;
+        return !isPrecomputed;
       }
       this.log(`an illegal item of index:${index} is among data that will be ignored.`);
       return false;
