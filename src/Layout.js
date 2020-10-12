@@ -565,7 +565,7 @@ Layout.prototype = {
    * @returns {array} paginated content
    */
   render: function (data) {
-    if (!this._checkSourceData(data)) { return null; }
+    if (!this._checkSourceData(data)) { return []; }
     if (!this._checkEnvironment()) { return null; }
 
     // create html string and append to template DOM node
@@ -611,7 +611,7 @@ Layout.prototype = {
    * @returns {string} html string
    */
   renderWithoutPagination: function (data) {
-    if (!this._checkSourceData(data)) { return null; }
+    if (!this._checkSourceData(data)) { return []; }
     if (!this._checkEnvironment()) { return null; }
 
     try {
