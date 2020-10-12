@@ -117,9 +117,8 @@ Layout.prototype = {
       marginBottom
     } = getBoxModelValue(element);
 
-    const textHeight = height;
-    const lines = Math.ceil(textHeight / lineHeight);
-    const actualLineHeight = textHeight / lines;
+    const lines = Math.ceil(height / lineHeight);
+    const actualLineHeight = height / lines;
 
     return {
       paddingTop,
@@ -131,10 +130,10 @@ Layout.prototype = {
       computedLineHeight: actualLineHeight,
 
       lineHeight,
-      textHeight: textHeight,
       minContainableHeight: lineHeight + paddingTop,
-      contentHeight: height,
       minContentHeight: height + paddingTop,
+      textHeight: height,
+      contentHeight: height + paddingV,
       completeHeight: height + paddingV + marginBottom,
     }
   },
