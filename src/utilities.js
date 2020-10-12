@@ -4,9 +4,11 @@ import { VIEWPORT_DOM, HEADLINE_LEVELS, FORMAT, WORD_SPLIT_REG_EXP } from './con
 function isArrayType(arg) {
   return Object.prototype.toString.call(arg) === '[object Array]';
 }
-
 function isNumberType(arg) {
   return Object.prototype.toString.call(arg) === '[object Number]';
+}
+function isStringType(arg) {
+  return Object.prototype.toString.call(arg) === '[object String]';
 }
 
 
@@ -17,37 +19,39 @@ function isTextualItem(type) {
 
 function checkParagraphData(item) {
   return (
-    item.type === FORMAT.PARAGRAPH
-    && item.id
+    item
+    && item.type === FORMAT.PARAGRAPH
     && item.data
+    && isStringType(item.data.text)
   );
 }
 
 
 function checkHeadlineData(item) {
   return (
-    item.type === FORMAT.HEADLINE
-    && item.id
+    item
+    && item.type === FORMAT.HEADLINE
     && item.data
     && HEADLINE_LEVELS.indexOf(item.data.level) > -1
+    && isStringType(item.data.text)
   );
 }
 
 
 function checkIllusData(item) {
   return (
-    item.type === FORMAT.ILLUS
-    && item.id
+    item
+    && item.type === FORMAT.ILLUS
     && item.data
     && item.data.img
-    && item.data.img.origWidth
-    && item.data.img.origHeight
+    && isNumberType(item.data.img.origWidth)
+    && isNumberType(item.data.img.origHeight)
   );
 }
 
 
 function checkPagebreakData(item) {
-  return item.type === FORMAT.PAGEBREAK;
+  return item && item.type === FORMAT.PAGEBREAK;
 }
 
 
@@ -154,7 +158,7 @@ function createTextualHtml(item) {
       })
     },
     item.data.text
-  )
+  );
 }
 
 
@@ -203,6 +207,7 @@ function checkViewportDom() {
 export {
   isArrayType,
   isNumberType,
+  isStringType,
   isTextualItem,
   checkParagraphData,
   checkHeadlineData,
