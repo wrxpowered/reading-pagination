@@ -86,19 +86,6 @@ Layout.prototype = {
   },
 
 
-  _calculateOffset: function (lineHeight, restHeight) {
-    let height = restHeight;
-    if (restHeight > this.viewportSize.h) {
-      height = this.viewportSize.h;
-    }
-    const lines = Math.floor(height / lineHeight);
-    return {
-      lines,
-      textOffset: lines * lineHeight,
-    }
-  },
-
-
   _getTextualElmentBaseline: function (element) {
     const {
       lineHeight,
@@ -219,6 +206,19 @@ Layout.prototype = {
   },
 
 
+  _calculateTextOffset: function (lineHeight, restHeight) {
+    let height = restHeight;
+    if (restHeight > this.viewportSize.h) {
+      height = this.viewportSize.h;
+    }
+    const lines = Math.floor(height / lineHeight);
+    return {
+      lines,
+      textOffset: lines * lineHeight,
+    }
+  },
+
+
   _paginateText: function (item, prevOffset = 0, prevLines = 0) {
     let page = this.pageGroup[this.pageGroup.length - 1];
     const {
@@ -231,7 +231,7 @@ Layout.prototype = {
 
     const restHeight = this.viewportSize.h - page.height;
     const restTextHeight = restHeight - paddingTop;
-    const { lines, textOffset } = this._calculateOffset(computedLineHeight, restTextHeight);
+    const { lines, textOffset } = this._calculateTextOffset(computedLineHeight, restTextHeight);
     const offsetHeight = textOffset + paddingTop;
 
     //当前页
@@ -437,7 +437,52 @@ Layout.prototype = {
   },
 
 
-  _handleRenderIllus: function (i, isPrecomputed) {
+  /**
+   * necessary environment detection
+   * - check: browser environment, DOM node template;
+   * - process: viewportSize update, data reset;
+   */
+  _checkEnvironment: function () {
+    if (!checkBrowserEnvironment()) {
+      this.log('web browser environment is not detected.');
+      return false;
+    }
+
+    if (!this.dom.viewport) {
+      this.dom.viewport = checkViewportDom();
+    }
+
+    const value = getBoxModelValue(this.dom.viewport);
+    if (value.boxSizing === 'content-box') {
+      this.viewportSize.w = value.width;
+      this.viewportSize.h = value.height;
+      this.reset();
+      return true;
+    } else {
+      this.log('use content-box box model instead of border-box, avoid an inconsistent issue in IE browser.');
+      return false;
+    }
+  },
+
+
+  /**
+   * check source data in render method
+   * @param {array} data should be a valid array
+   */
+  _checkSourceData: function (data) {
+    if (!isArrayType(data)) {
+      this.log('the param should be an array.');
+      return false;
+    }
+    if (data.length === 0) {
+      this.log('there is nothing to render.');
+      return false;
+    }
+    return true;
+  },
+
+
+  _initIllusData: function (i, isPrecomputed) {
     if (isPrecomputed) {
       const size = this._calculateZoomedSize(i.data.img);
       return createHtmlString(
@@ -462,7 +507,7 @@ Layout.prototype = {
   },
 
 
-  _handleRenderPagebreak: function (isPrecomputed) {
+  _initPagebreakData: function (isPrecomputed) {
     if (isPrecomputed) {
       this.log(`pagebreak will be ignored when render without pagination.`);
       return '';
@@ -472,11 +517,13 @@ Layout.prototype = {
 
 
   /**
-   * 初始化待排版内容
-   * @param {array} data 
-   * @param {boolean} isPrecomputed 
+   * create html string from source data
+   * 
+   * format data, then transfer source data to html string.
+   * @param {array} data source data
+   * @param {boolean} isPrecomputed different render mode
    */
-  _init: function (data, isPrecomputed) {
+  _initData: function (data, isPrecomputed) {
     var html = '';
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
@@ -499,47 +546,37 @@ Layout.prototype = {
         return true;
       } else if (checkIllusData(i)) {
         i.className = `illus-${this.size}`;
-        html += this._handleRenderIllus(i, isPrecomputed);
+        html += this._initIllusData(i, isPrecomputed);
         return true;
       } else if (checkPagebreakData(i)) {
-        html += this._handleRenderPagebreak(isPrecomputed);
+        html += this._initPagebreakData(isPrecomputed);
         return true;
       }
-      this.log(`an illegal format item of index:${index} is among data that will be ignored.`);
+      this.log(`an illegal item of index:${index} is among data that will be ignored.`);
       return false;
     });
     return html;
   },
 
 
-  checkBeforeRender: function (data) {
-    if (!isArrayType(data)) {
-      this.log('param is not an array in the render method.');
-      return false;
-    }
-    if (data.length === 0) {
-      this.log('there is nothing to render.');
-      return false;
-    }
-    if (!this.checkEnvironment()) { 
-      return false;
-    }
-    return true;
-  },
-
-
   /**
-   * 分页排版渲染
-   * @param {Array} data 源数据
-   * @returns {Array} 排版后的数据
+   * compose data with pagination
+   * @param {array} data source data
+   * @returns {array} paginated content
    */
   render: function (data) {
-    if (!this.checkBeforeRender(data)) { return null; }
+    if (!this._checkSourceData(data)) { return null; }
+    if (!this._checkEnvironment()) { return null; }
 
-    // 生成 html 字符串，添加至 DOM
-    this.dom.viewport.innerHTML = this._init(data, false);
+    // create html string and append to template DOM node
+    try {
+      this.dom.viewport.innerHTML = this._initData(data, false);
+    } catch (error) {
+      this.log('error occurs when init source data.');
+      return [];
+    }
 
-    // 排版分页
+    // paginate content
     this._pushEmptyPage();
     var nodes = this.dom.viewport.childNodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
@@ -569,60 +606,39 @@ Layout.prototype = {
 
 
   /**
-   * 竖向排版
-   * @param {Array} data 源数据
-   * @returns {string} 排版后的 html 字符串
+   * compose data without pagination
+   * @param {Array} data source data
+   * @returns {string} html string
    */
   renderWithoutPagination: function (data) {
-    if (!this.checkBeforeRender(data)) { return null; }
-    return this._init(data, true);
-  },
+    if (!this._checkSourceData(data)) { return null; }
+    if (!this._checkEnvironment()) { return null; }
 
-
-  /**
-   * 环境检查
-   */
-  checkEnvironment: function () {
-    if (!checkBrowserEnvironment()) {
-      this.log('web browser environment is not detected.');
-      return false;
-    }
-
-    if (!this.dom.viewport) {
-      this.dom.viewport = checkViewportDom();
-    }
     try {
-      const s = getBoxModelValue(this.dom.viewport);
-      if (s.boxSizing === 'content-box') {
-        this.viewportSize.w = s.width;
-        this.viewportSize.h = s.height;
-        this.reset();
-        return true;
-      } else {
-        this.log('use content-box box model instead of border-box which has an inconsistent issue in IE.');
-        return false;
-      }
+      return this._initData(data, true);
     } catch (error) {
-      this.log(`viewport DOM is not available.`);
-      return false;
+      this.log('error occurs when init source data.');
+      return '';
     }
   },
 
 
   /**
-   * 更新排版尺寸
+   * change content level size and reset
    * @param {string} newSize 
    */
   updateSize: function (newSize) {
     if (SIZE_LEVELS.indexOf(newSize) > -1 && this.size !== newSize) {
       this.__proto__.size = newSize;
       this.reset();
+    } else {
+      this.log('invalid level size.');
     }
   },
 
 
   /**
-   * 重置
+   * data reset
    */
   reset: function () {
     this.data.length = 0;
