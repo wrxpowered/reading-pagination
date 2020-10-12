@@ -46,7 +46,7 @@ Layout.prototype = {
     console.log(message);
   },
 
-  createHtmlOutput: function (item) {
+  _createHtmlOutput: function (item) {
     switch (item.type) {
       case 'headline':
         return createTextualHtml(item);
@@ -59,7 +59,7 @@ Layout.prototype = {
     }
   },
 
-  wrapPageContentHtml: function (page) {
+  _wrapPageContentHtml: function (page) {
     const pageContentHtml = createHtmlString(
       'div',
       {
@@ -85,7 +85,8 @@ Layout.prototype = {
     return pageWrapperHtml;
   },
 
-  calculateOffset: function (lineHeight, restHeight) {
+
+  _calculateOffset: function (lineHeight, restHeight) {
     let height = restHeight;
     if (restHeight > this.viewportSize.h) {
       height = this.viewportSize.h;
@@ -97,17 +98,8 @@ Layout.prototype = {
     }
   },
 
-  getParagraphClassName: function () {
-    return `paragraph-${this.size}`;
-  },
-  getHeadlineClassName: function (level) {
-    return `headline-${this.size} headline-level-${level}`;
-  },
-  getIllusClassName: function () {
-    return `illus-${this.size}`;
-  },
 
-  getTextualElmentBaseline: function (element) {
+  _getTextualElmentBaseline: function (element) {
     const {
       lineHeight,
       height,
@@ -139,7 +131,7 @@ Layout.prototype = {
   },
 
 
-  calculateZoomedSize: function (img) {
+  _calculateZoomedSize: function (img) {
     const origWidth = parseInt(img.origWidth, 10);
     const origHeight = parseInt(img.origHeight, 10);
 
@@ -154,7 +146,7 @@ Layout.prototype = {
   },
 
 
-  getGraphicElementBaseline: function (element, img) {
+  _getGraphicElementBaseline: function (element, img) {
     const origWidth = parseInt(img.origWidth, 10);
     const origHeight = parseInt(img.origHeight, 10);
     const {
@@ -191,7 +183,7 @@ Layout.prototype = {
   },
 
 
-  pushEmptyPage: function () {
+  _pushEmptyPage: function () {
     this.pageGroup.push({
       index: this.pageGroup.length,
       height: 0,
@@ -203,21 +195,21 @@ Layout.prototype = {
   },
 
 
-  pushToNextPage: function (item) {
+  _pushToNextPage: function (item) {
     if (item.baseline.minContentHeight > this.viewportSize.h) {
       /* 无法在下一页完整显示 */
-      this.pushEmptyPage();
+      this._pushEmptyPage();
       this.pageGroup[this.pageGroup.length - 1].boundaryFrom = {
         id: item.id,
         type: item.type
       }
-      this.paginateText(item);
+      this._paginateText(item);
     } else {
       const nextPageIndex = this.pageGroup.length;
       this.pageGroup.push({
         index: nextPageIndex,
         height: item.height,
-        html: this.createHtmlOutput(item),
+        html: this._createHtmlOutput(item),
         boundaryFrom: { id: item.id, type: item.type },
         boundaryTo: null,
         items: [item]
@@ -227,7 +219,7 @@ Layout.prototype = {
   },
 
 
-  paginateText: function (item, prevOffset = 0, prevLines = 0) {
+  _paginateText: function (item, prevOffset = 0, prevLines = 0) {
     let page = this.pageGroup[this.pageGroup.length - 1];
     const {
       paddingTop,
@@ -239,7 +231,7 @@ Layout.prototype = {
 
     const restHeight = this.viewportSize.h - page.height;
     const restTextHeight = restHeight - paddingTop;
-    const { lines, textOffset } = this.calculateOffset(computedLineHeight, restTextHeight);
+    const { lines, textOffset } = this._calculateOffset(computedLineHeight, restTextHeight);
     const offsetHeight = textOffset + paddingTop;
 
     //当前页
@@ -249,9 +241,9 @@ Layout.prototype = {
       linesOffset: prevLines,
     });
     page.items.push(itemInCurrentPage);
-    page.html += this.createHtmlOutput(itemInCurrentPage);
+    page.html += this._createHtmlOutput(itemInCurrentPage);
     page.height = page.height + offsetHeight;
-    page.html = this.wrapPageContentHtml(page);
+    page.html = this._wrapPageContentHtml(page);
     page.boundaryTo = {
       id: item.id,
       type: item.type,
@@ -267,8 +259,8 @@ Layout.prototype = {
 
     //下一页能否显示完剩余内容
     if ((minContentHeight - offsetHeight - prevOffset) > this.viewportSize.h) {
-      this.pushEmptyPage();
-      this.paginateText(item, offsetHeight + prevOffset, lines + prevLines);
+      this._pushEmptyPage();
+      this._paginateText(item, offsetHeight + prevOffset, lines + prevLines);
     } else {
       let heightInNextPage = completeHeight - offsetHeight - prevOffset;
       const itemInNextPage = Object.assign({}, item, {
@@ -280,7 +272,7 @@ Layout.prototype = {
       this.pageGroup.push({
         index: nextPageIndex,
         height: heightInNextPage,
-        html: this.createHtmlOutput(itemInNextPage),
+        html: this._createHtmlOutput(itemInNextPage),
         boundaryFrom: {
           id: item.id,
           type: item.type,
@@ -294,8 +286,8 @@ Layout.prototype = {
   },
 
 
-  handleText: function (rawItem, node) {
-    const baseline = this.getTextualElmentBaseline(node);
+  _handleText: function (rawItem, node) {
+    const baseline = this._getTextualElmentBaseline(node);
     const {
       minContainableHeight,
       contentHeight,
@@ -327,7 +319,7 @@ Layout.prototype = {
           ];
           const boundaryHeight = getBoundaryHeight(restHeight, boundary);
           page.items.push(item);
-          page.html += this.createHtmlOutput(item);
+          page.html += this._createHtmlOutput(item);
           page.height = page.height + boundaryHeight;
           if (page.items.length === 1) {
             page.boundaryFrom = {
@@ -344,7 +336,7 @@ Layout.prototype = {
               type: item.type
             }
           }
-          this.paginateText(item);
+          this._paginateText(item);
         }
       } else {
         /* 添加到下一页 */
@@ -353,8 +345,8 @@ Layout.prototype = {
           id: lastItem.id,
           type: lastItem.type
         };
-        page.html = this.wrapPageContentHtml(page);
-        this.pushToNextPage(item);
+        page.html = this._wrapPageContentHtml(page);
+        this._pushToNextPage(item);
       }
     } else {
       /* 添加到下一页 */
@@ -363,13 +355,13 @@ Layout.prototype = {
         id: lastItem.id,
         type: lastItem.type
       };
-      page.html = this.wrapPageContentHtml(page);
-      this.pushToNextPage(item);
+      page.html = this._wrapPageContentHtml(page);
+      this._pushToNextPage(item);
     }
   },
 
-  handleIllus: function (rawItem, node) {
-    const baseline = this.getGraphicElementBaseline(node, rawItem.data.img);
+  _handleIllus: function (rawItem, node) {
+    const baseline = this._getGraphicElementBaseline(node, rawItem.data.img);
     const {
       minContainableHeight,
       contentHeight,
@@ -399,7 +391,7 @@ Layout.prototype = {
         ];
         const boundaryHeight = getBoundaryHeight(restHeight, boundary);
         page.items.push(item);
-        page.html += this.createHtmlOutput(item);
+        page.html += this._createHtmlOutput(item);
         page.height = page.height + boundaryHeight;
         if (page.items.length === 1) {
           page.boundaryFrom = {
@@ -415,8 +407,8 @@ Layout.prototype = {
           id: lastItem.id,
           type: lastItem.type
         };
-        page.html = this.wrapPageContentHtml(page);
-        this.pushToNextPage(item);
+        page.html = this._wrapPageContentHtml(page);
+        this._pushToNextPage(item);
       }
     } else {
       /* 添加到下一页 */
@@ -425,12 +417,12 @@ Layout.prototype = {
         id: lastItem.id,
         type: lastItem.type
       };
-      page.html = this.wrapPageContentHtml(page);
-      this.pushToNextPage(item);
+      page.html = this._wrapPageContentHtml(page);
+      this._pushToNextPage(item);
     }
   },
 
-  handlePagebreak: function (isLayoutFinished) {
+  _handlePagebreak: function (isLayoutFinished) {
     let page = this.pageGroup[this.pageGroup.length - 1];
     if (!page.html) { return; }
     const lastItem = page.items[page.items.length - 1];
@@ -438,16 +430,16 @@ Layout.prototype = {
       id: lastItem.id,
       type: lastItem.type
     };
-    page.html = this.wrapPageContentHtml(page);
+    page.html = this._wrapPageContentHtml(page);
     if (!isLayoutFinished) {
-      this.pushEmptyPage();
+      this._pushEmptyPage();
     }
   },
 
 
-  handleRenderIllus: function (i, isPrecomputed) {
+  _handleRenderIllus: function (i, isPrecomputed) {
     if (isPrecomputed) {
-      const size = this.calculateZoomedSize(i.data.img);
+      const size = this._calculateZoomedSize(i.data.img);
       return createHtmlString(
         'div',
         { 'class': i.className, 'data-id': i.id },
@@ -470,7 +462,7 @@ Layout.prototype = {
   },
 
 
-  handleRenderPagebreak: function (isPrecomputed) {
+  _handleRenderPagebreak: function (isPrecomputed) {
     if (isPrecomputed) {
       this.log(`pagebreak will be ignored when render without pagination.`);
       return '';
@@ -484,12 +476,12 @@ Layout.prototype = {
    * @param {array} data 
    * @param {boolean} isPrecomputed 
    */
-  init: function (data, isPrecomputed) {
+  _init: function (data, isPrecomputed) {
     var html = '';
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
-        i.className = this.getParagraphClassName();
+        i.className = `paragraph-${this.size}`;
         html += createHtmlString(
           'div',
           { 'class': i.className, 'data-id': i.id },
@@ -498,7 +490,7 @@ Layout.prototype = {
         return true;
       } else if (checkHeadlineData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
-        i.className = this.getHeadlineClassName(i.data.level);
+        i.className = `headline-${this.size} headline-level-${i.data.level}`;
         html += createHtmlString(
           'div',
           { 'class': i.className, 'data-id': i.id },
@@ -506,11 +498,11 @@ Layout.prototype = {
         );
         return true;
       } else if (checkIllusData(i)) {
-        i.className = this.getIllusClassName();
-        html += this.handleRenderIllus(i, isPrecomputed);
+        i.className = `illus-${this.size}`;
+        html += this._handleRenderIllus(i, isPrecomputed);
         return true;
       } else if (checkPagebreakData(i)) {
-        html += this.handleRenderPagebreak(isPrecomputed);
+        html += this._handleRenderPagebreak(isPrecomputed);
         return true;
       }
       this.log(`an illegal format item of index:${index} is among data that will be ignored.`);
@@ -545,31 +537,31 @@ Layout.prototype = {
     if (!this.checkBeforeRender(data)) { return null; }
 
     // 生成 html 字符串，添加至 DOM
-    this.dom.viewport.innerHTML = this.init(data, false);
+    this.dom.viewport.innerHTML = this._init(data, false);
 
     // 排版分页
-    this.pushEmptyPage();
+    this._pushEmptyPage();
     var nodes = this.dom.viewport.childNodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
       let item = this.data[i];
       switch (item.type) {
         case 'paragraph':
-          this.handleText(item, nodes[i]);
+          this._handleText(item, nodes[i]);
           break;
         case 'headline':
-          this.handleText(item, nodes[i]);
+          this._handleText(item, nodes[i]);
           break;
         case 'illus':
-          this.handleIllus(item, nodes[i]);
+          this._handleIllus(item, nodes[i]);
           break;
         case 'pagebreak':
-          if (i !== len - 1) { this.handlePagebreak(); }
+          if (i !== len - 1) { this._handlePagebreak(); }
           break;
         default:
           break;
       }
     }
-    this.handlePagebreak(true);
+    this._handlePagebreak(true);
 
     this.dom.viewport.innerHTML = '';
     return this.pageGroup;
@@ -583,7 +575,7 @@ Layout.prototype = {
    */
   renderWithoutPagination: function (data) {
     if (!this.checkBeforeRender(data)) { return null; }
-    return this.init(data, true);
+    return this._init(data, true);
   },
 
 
@@ -738,7 +730,7 @@ Layout.prototype = {
    * @param {Object} item 
    * @param {Array} lineRange [lineFrom, lineTo] 或 [lineFrom]
    */
-  handleTextDivision: function (item, lineRange) {
+  _handleTextDivision: function (item, lineRange) {
     const split = handleCellSplit(item.data.text);
     var element = createElement(
       'div',
@@ -967,12 +959,12 @@ Layout.prototype = {
 
     if (dividedQueue.length === 2) {
       // 页面首尾分割（首尾不同的段）
-      itemFrom = handleItem(this.handleTextDivision(
+      itemFrom = handleItem(this._handleTextDivision(
         dividedQueue[0].item,
         dividedQueue[0].lineRange
       ));
       textArr.push(...undividedTextArr);
-      itemTo = handleItem(this.handleTextDivision(
+      itemTo = handleItem(this._handleTextDivision(
         dividedQueue[1].item,
         dividedQueue[1].lineRange
       ));
@@ -981,13 +973,13 @@ Layout.prototype = {
         if (dividedQueue[0].lineRange[0] === 0) {
           // 页尾切分
           textArr.push(...undividedTextArr);
-          itemTo = handleItem(this.handleTextDivision(
+          itemTo = handleItem(this._handleTextDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
           ))
         } else {
           // 首尾切分（首尾相同的段）
-          itemTo = handleItem(this.handleTextDivision(
+          itemTo = handleItem(this._handleTextDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
           ));
@@ -997,7 +989,7 @@ Layout.prototype = {
         }
       } else {
         // 页首切分
-        itemFrom = handleItem(this.handleTextDivision(
+        itemFrom = handleItem(this._handleTextDivision(
           dividedQueue[0].item,
           dividedQueue[0].lineRange
         ));
