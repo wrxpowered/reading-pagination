@@ -422,15 +422,23 @@ Layout.prototype = {
     }
   },
 
+
+  /**
+   * 
+   * @param {boolean} isLayoutFinished 
+   */
   _handlePagebreak: function (isLayoutFinished) {
-    let page = this.pageGroup[this.pageGroup.length - 1];
-    if (!page.html) { return; }
-    const lastItem = page.items[page.items.length - 1];
-    page.boundaryTo = {
+    var lastPage = this.pageGroup[this.pageGroup.length - 1];
+    if (!lastPage.html) { return; }
+
+    const lastItem = lastPage.items[lastPage.items.length - 1];
+    lastPage.boundaryTo = {
       id: lastItem.id,
       type: lastItem.type
     };
-    page.html = this._wrapPageContentHtml(page);
+    lastPage.html = this._wrapPageContentHtml(lastPage);
+
+    // pagebreak item in the last will create an empty page which has no necessary.
     if (!isLayoutFinished) {
       this._pushEmptyPage();
     }
@@ -552,7 +560,7 @@ Layout.prototype = {
         html += this._initPagebreakData(isPrecomputed);
         return !isPrecomputed;
       }
-      this.log(`an illegal item of index:${index} is among data that will be ignored.`);
+      this.log(`item of index: ${index} will be ignored which is invalid format.`);
       return false;
     });
     return html;
@@ -648,13 +656,14 @@ Layout.prototype = {
 
 
   /**
-   * 查找段落
+   * locate item in which page
    * @param {string} itemId
-   * @param {number} charOffset 字符偏移量
-   * @returns {number|null} 返回匹配结果，页码索引或 null (未匹配)
+   * @param {number} charOffset char location
+   * @returns {number|null} return the target page index, or null
    */
   findItem: function (itemId, charOffset) {
     const pagePosition = this.pageMap[itemId];
+
     if (typeof pagePosition === 'undefined') {
       this.log('item not found.');
       return null;
@@ -694,6 +703,7 @@ Layout.prototype = {
         if (result.length > 0) {
           return result[0].pageIndex;
         }
+
         this.log('charOffset is not matched.');
         return pagePosition[0];
       }
@@ -703,17 +713,17 @@ Layout.prototype = {
 
 
   /**
-   * 查找有效的段落
-   * 指定 itemId 未找到时，尝试匹配一个有效 itemId
+   * same as the method `findItem`
+   * if the itemId is not exist, try to match a valid neighbouring itemId backward.
    * @param {string} itemId
-   * @param {number} charOffset 字符偏移量
-   * @returns {number|null} 返回匹配结果，页码索引或 null (未匹配)
+   * @param {number} charOffset
+   * @returns {number|null}
    */
   findValidItem: function (itemId, charOffset) {
-    if (isNumberType(this.pageMap[itemId])) {
-      return this.pageMap[itemId];
+    if (typeof this.pageMap[itemId] !== 'undefined') {
+      return this.findItem(itemId, charOffset);
     }
-    // 未找到对应段落时，尝试向后匹配最相邻的段落
+
     const value = parseInt(itemId, 10);
     let result = null;
     for (let i = 0, len = this.data.length; i < len; i++) {
@@ -742,9 +752,10 @@ Layout.prototype = {
 
 
   /**
-   * 文本分割
-   * @param {Object} item 
-   * @param {Array} lineRange [lineFrom, lineTo] 或 [lineFrom]
+   * handle the boundary of the pagination position
+   * @param {object} item item of this.data
+   * @param {array} lineRange [lineFrom, lineTo] 或 [lineFrom]
+   * @returns {object} exact division info
    */
   _handleTextDivision: function (item, lineRange) {
     const split = handleCellSplit(item.data.text);
@@ -755,7 +766,7 @@ Layout.prototype = {
     );
     this.dom.viewport.appendChild(element);
 
-    // 获取一个非空白符的字符索引
+    // get a non-blank char index forward or backward
     function getValidCharIndex(index, direction) {
       if (index < 0 || index > split.length - 1) {
         return null;
@@ -836,15 +847,15 @@ Layout.prototype = {
       let cellFrom = 0, cellTo = split.length;
       if (lineRange.length === 2) {
         if (lineRange[0] === 0) {
-          // 截取文本前半部分
+          // slice front part of paragraph
           cellTo = guessPos(lineRange[1]);
         } else {
-          // 截取文本中间部分
+          // slice middle part of paragraph
           cellFrom = guessPos(lineRange[0]);
           cellTo = guessPos(lineRange[1]);
         }
       } else if (lineRange.length === 1) {
-        // 截取文本后半部分
+        // slice last part of paragraph
         cellFrom = guessPos(lineRange[0]);
       }
 
@@ -872,17 +883,16 @@ Layout.prototype = {
 
 
   /**
-   * 提取页面中的纯文本
-   * @param {number} pageIndex 页码索引
-   * @param {string} separator 分隔符
-   * @param {number} textLength 指定最大文本长度
+   * extract and concat text of different paragraphs fron page
+   * @param {number} pageIndex
+   * @param {string} separator
+   * @param {number} textLength
    * @returns {string|null}
    */
   extractTextFromPage: function (pageIndex, separator = ' ', textLength) {
     const result = this.extractFromPage(pageIndex);
     if (result === null) { return ''; }
 
-    // 拼接文本
     const text = result.textualItems.join(separator);
     var concatText = removeExtraTextSpace(text);
     if (isNumberType(textLength)) {
@@ -895,8 +905,10 @@ Layout.prototype = {
 
 
   /**
-   * 提取页面内容
-   * @param {number} pageIndex 页码索引
+   * extract textual content from a page
+   * 
+   * if a page is paginated, the divided text content will be captured.
+   * @param {number} pageIndex
    * @returns {object|null}
    */
   extractFromPage: function (pageIndex) {
@@ -905,7 +917,7 @@ Layout.prototype = {
       return null;
     }
     if (pageIndex < 0 || pageIndex >= this.pageGroup.length) {
-      this.log('invalid pageIndex.');
+      this.log(`invalid pageIndex of ${pageIndex} which is not found.`);
       return null;
     }
 
@@ -919,17 +931,17 @@ Layout.prototype = {
     const lastItemIndex = page.items.length - 1;
     const lastItem = page.items[lastItemIndex];
 
-    let dividedQueue = []; // 需要分割的段
-    let undividedPos = [0, lastItemIndex]; // 不需要分割的段
-    let textArr = []; // 所有段的文本
-    let undividedTextArr = null; // 未分割段的文本
+    let dividedQueue = []; // item need to divide
+    let undividedPos = [0, lastItemIndex]; // item without pagination
+    let undividedTextArr = null; // undivided text values
+    let textArr = []; // all text values of the page
 
-    let itemFrom = { id: firstItem.id }; // 起止段
+    let itemFrom = { id: firstItem.id };
     let itemTo = { id: lastItem.id };
 
-    // 检查页面的分页状态
+    // check pagination status of the page
     if (page.boundaryFrom.paginated) {
-      // 页面起点分割：截取段的后半部分
+      // will capture last part of paragraph
       undividedPos[0]++;
       dividedQueue.push({
         item: firstItem,
@@ -943,10 +955,10 @@ Layout.prototype = {
         page.boundaryFrom.paginated
         && page.boundaryFrom.id === page.boundaryTo.id
       ) {
-        // 页面首尾分割：截取段的中间部分
+        // will capture middle part of paragraph
         dividedQueue[0].lineRange.push(line + 1);
       } else {
-        // 页面结尾分割：截取段的前半部分
+        // will capture front part of paragraph
         dividedQueue.push({
           item: lastItem,
           lineRange: [0, line + 1]
@@ -954,14 +966,20 @@ Layout.prototype = {
       }
     }
 
-    // 处理未分割段的文本
+
+    /**
+     * handle undivided text values
+     */
     undividedTextArr = page.items
       .slice(undividedPos[0], undividedPos[1] + 1)
       .filter(i => isTextualItem(i.type))
       .map(i => i.data.text);
 
-    // 处理需要分割段的文本
-    function handleItem(division) {
+
+    /**
+     * handle divided text values
+     */
+    function createDivision(division) {
       textArr.push(division.text);
       return {
         id: division.id,
@@ -972,53 +990,67 @@ Layout.prototype = {
         textLength: division.text.length,
       }
     }
-
     if (dividedQueue.length === 2) {
-      // 页面首尾分割（首尾不同的段）
-      itemFrom = handleItem(this._handleTextDivision(
+      /**
+       * page beginning and ending division with different paragraphs
+       * - itemFrom: last part of paragraph A
+       * - itemTo: front part of paragraph B
+       */
+      itemFrom = createDivision(this._handleTextDivision(
         dividedQueue[0].item,
         dividedQueue[0].lineRange
       ));
       textArr.push(...undividedTextArr);
-      itemTo = handleItem(this._handleTextDivision(
+      itemTo = createDivision(this._handleTextDivision(
         dividedQueue[1].item,
         dividedQueue[1].lineRange
       ));
     } else if (dividedQueue.length === 1) {
       if (dividedQueue[0].lineRange.length === 2) {
         if (dividedQueue[0].lineRange[0] === 0) {
-          // 页尾切分
+          /**
+           * page ending division only
+           * - itemTo: front part of paragraph
+           */
           textArr.push(...undividedTextArr);
-          itemTo = handleItem(this._handleTextDivision(
+          itemTo = createDivision(this._handleTextDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
           ))
         } else {
-          // 首尾切分（首尾相同的段）
-          itemTo = handleItem(this._handleTextDivision(
+          /**
+           * page beginning and ending division with same paragraph
+           * - itemFrom & itemTo: middle part of paragraph
+           */
+          itemTo = createDivision(this._handleTextDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
           ));
+          // charOffset of itemTo include current page's text length
           itemFrom = Object.assign({}, itemTo, {
             charOffset: itemTo.charTo - itemTo.textLength
           });
         }
       } else {
-        // 页首切分
-        itemFrom = handleItem(this._handleTextDivision(
+        /**
+         * page beginning division only
+         * - itemFrom: last part of paragraph
+         */
+        itemFrom = createDivision(this._handleTextDivision(
           dividedQueue[0].item,
           dividedQueue[0].lineRange
         ));
         textArr.push(...undividedTextArr);
       }
     } else {
-      // 页面未产生分页
+      /**
+       * page has no pagination
+       */
       textArr.push(...undividedTextArr);
     }
 
-    // 重置 DOM
-    this.dom.viewport.innerHTML = '';
 
+    this.dom.viewport.innerHTML = ''; // reset DOM
     return {
       pageIndex,
       itemFrom,
