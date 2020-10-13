@@ -675,12 +675,13 @@ Layout.prototype = {
       if (charOffset) {
         charOffset = parseInt(charOffset, 10);
         if (!isNumberType(charOffset) || charOffset < 0) {
-          this.log('invalid charOffset.');
-          return null;
+          this.log('invalid charOffset param.');
+          return pagePosition[0];
         }
 
         const edges = pagePosition.map(pageIndex => this.extractFromPage(pageIndex));
         const result = edges.filter(division => {
+          if (division === null) { return false; }
           if (
             itemId === division.itemFrom.id
             && division.itemFrom.paginated
