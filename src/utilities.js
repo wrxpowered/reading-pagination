@@ -44,8 +44,8 @@ function checkIllusData(item) {
     && item.type === FORMAT.ILLUS
     && item.data
     && item.data.img
-    && isNumberType(item.data.img.origWidth)
-    && isNumberType(item.data.img.origHeight)
+    && item.data.img.origWidth
+    && item.data.img.origHeight
   );
 }
 
