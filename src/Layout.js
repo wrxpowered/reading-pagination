@@ -762,7 +762,7 @@ Layout.prototype = {
    * @param {array} lineRange [lineFrom, lineTo] 或 [lineFrom]
    * @returns {object} exact division info
    */
-  _handleTextDivision: function (item, lineRange) {
+  _handleDivision: function (item, lineRange) {
     const split = handleCellSplit(item.data.text);
     var element = createElement(
       'div',
@@ -824,7 +824,7 @@ Layout.prototype = {
       if (!lineGuessResult) { return null; }
 
 
-      let charPos = halfPos;
+      let charPos = getValidCharIndex(halfPos - 1, -1);
       function guessChar() {
         if (charPos === null) { return false; }
 
@@ -844,34 +844,30 @@ Layout.prototype = {
 
       const charGuessResult = guessChar();
       if (!charGuessResult) { return null; }
-      charPos = getValidCharIndex(charPos + 1, 1);
       return charPos;
     }
 
     try {
-      let cellFrom = 0, cellTo = split.length;
+      let cellFrom = 0, cellTo = split.length - 1;
       if (lineRange.length === 2) {
         if (lineRange[0] === 0) {
           // slice front part of paragraph
           cellTo = guessPos(lineRange[1]);
         } else {
           // slice middle part of paragraph
-          cellFrom = guessPos(lineRange[0]);
+          cellFrom = getValidCharIndex(guessPos(lineRange[0]) + 1, 1);
           cellTo = guessPos(lineRange[1]);
         }
       } else if (lineRange.length === 1) {
         // slice last part of paragraph
-        cellFrom = guessPos(lineRange[0]);
+        cellFrom = getValidCharIndex(guessPos(lineRange[0]) + 1, 1);
       }
-
-      const charTo = split.group.slice(0, cellTo).join('').length;
 
       return {
         id: item.id,
         charFrom: split.group.slice(0, cellFrom).join('').length + 1,
-        charTo: charTo,
-        charOffset: charTo,
-        text: split.group.slice(cellFrom, cellTo).join(''),
+        charTo: split.group.slice(0, cellTo + 1).join('').length,
+        text: split.group.slice(cellFrom, cellTo + 1).join(''),
       }
     } catch (error) {
       this.log(`Item ${item.id} text division: boundary guess is out of edge.`);
@@ -918,7 +914,7 @@ Layout.prototype = {
    */
   extractFromPage: function (pageIndex) {
     if (this.pageGroup.length === 0) {
-      this.log('nothing to extract.');
+      this.log('there is nothing to extract.');
       return null;
     }
     if (pageIndex < 0 || pageIndex >= this.pageGroup.length) {
@@ -991,8 +987,18 @@ Layout.prototype = {
         paginated: true,
         charFrom: division.charFrom,
         charTo: division.charTo,
-        charOffset: division.charOffset,
-        textLength: division.text.length,
+      }
+    }
+    function handleItemFrom(fromData) {
+      return {
+        ...fromData,
+        charOffset: fromData.charFrom
+      }
+    }
+    function handleItemTo(toData) {
+      return {
+        ...toData,
+        charOffset: toData.charTo
       }
     }
     if (dividedQueue.length === 2) {
@@ -1001,15 +1007,15 @@ Layout.prototype = {
        * - itemFrom: last part of paragraph A
        * - itemTo: front part of paragraph B
        */
-      itemFrom = createDivision(this._handleTextDivision(
+      itemFrom = handleItemFrom(createDivision(this._handleDivision(
         dividedQueue[0].item,
         dividedQueue[0].lineRange
-      ));
+      )));
       textArr.push(...undividedTextArr);
-      itemTo = createDivision(this._handleTextDivision(
+      itemTo = handleItemTo(createDivision(this._handleDivision(
         dividedQueue[1].item,
         dividedQueue[1].lineRange
-      ));
+      )));
     } else if (dividedQueue.length === 1) {
       if (dividedQueue[0].lineRange.length === 2) {
         if (dividedQueue[0].lineRange[0] === 0) {
@@ -1018,33 +1024,31 @@ Layout.prototype = {
            * - itemTo: front part of paragraph
            */
           textArr.push(...undividedTextArr);
-          itemTo = createDivision(this._handleTextDivision(
+          itemTo = handleItemTo(createDivision(this._handleDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
-          ))
+          )));
         } else {
           /**
            * page beginning and ending division with same paragraph
            * - itemFrom & itemTo: middle part of paragraph
            */
-          itemTo = createDivision(this._handleTextDivision(
+          itemTo = handleItemTo(createDivision(this._handleDivision(
             dividedQueue[0].item,
             dividedQueue[0].lineRange
-          ));
+          )));
           // charOffset of itemTo include current page's text length
-          itemFrom = Object.assign({}, itemTo, {
-            charOffset: itemTo.charTo - itemTo.textLength
-          });
+          itemFrom = handleItemFrom(itemTo);
         }
       } else {
         /**
          * page beginning division only
          * - itemFrom: last part of paragraph
          */
-        itemFrom = createDivision(this._handleTextDivision(
+        itemFrom = handleItemFrom(createDivision(this._handleDivision(
           dividedQueue[0].item,
           dividedQueue[0].lineRange
-        ));
+        )));
         textArr.push(...undividedTextArr);
       }
     } else {
