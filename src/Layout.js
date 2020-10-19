@@ -421,12 +421,6 @@ Layout.prototype = {
       this._pushToNextPage(item);
     }
   },
-
-
-  /**
-   * 
-   * @param {boolean} isLayoutFinished 
-   */
   _handlePagebreak: function (isLayoutFinished) {
     var lastPage = this.pageGroup[this.pageGroup.length - 1];
     if (!lastPage.html) { return; }
@@ -668,11 +662,6 @@ Layout.prototype = {
   findItem: function (itemId, charOffset) {
     const pagePosition = this.pageMap[itemId];
 
-    if (typeof pagePosition === 'undefined') {
-      this.log('item not found.');
-      return null;
-    }
-
     if (isNumberType(pagePosition)) {
       return pagePosition;
     } else if (isArrayType(pagePosition)) {
@@ -712,7 +701,11 @@ Layout.prototype = {
         this.log('charOffset is not matched.');
         return pagePosition[0];
       }
+      this.log('charOffset is not specified, first of pages will be returned.')
       return pagePosition[0];
+    } else {
+      this.log('item not found.');
+      return null;
     }
   },
 
