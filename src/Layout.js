@@ -421,6 +421,7 @@ Layout.prototype = {
       this._pushToNextPage(item);
     }
   },
+
   _handlePagebreak: function (isLayoutFinished) {
     var lastPage = this.pageGroup[this.pageGroup.length - 1];
     if (!lastPage.html) { return; }
@@ -660,6 +661,7 @@ Layout.prototype = {
    * @returns {number|null} return the target page index, or null
    */
   findItem: function (itemId, charOffset) {
+    itemId = String(itemId);
     const pagePosition = this.pageMap[itemId];
 
     if (isNumberType(pagePosition)) {
@@ -675,24 +677,15 @@ Layout.prototype = {
         const edges = pagePosition.map(pageIndex => this.extractFromPage(pageIndex));
         const result = edges.filter(division => {
           if (division === null) { return false; }
-          if (
-            itemId === division.itemFrom.id
-            && division.itemFrom.paginated
-          ) {
-            return (
-              charOffset >= division.itemFrom.charFrom
-              && charOffset <= division.itemFrom.charTo
-            );
-          } else if (
-            itemId === division.itemTo.id
-            && division.itemTo.paginated
-          ) {
-            return (
-              charOffset >= division.itemTo.charFrom
-              && charOffset <= division.itemTo.charTo
-            );
+          if (itemId === division.itemTo.id) {
+            if (division.itemTo.charOffset) {
+              return charOffset <= division.itemTo.charOffset;
+            } else {
+              return true;
+            }
+          } else {
+            return true;
           }
-          return false;
         });
         if (result.length > 0) {
           return result[0].pageIndex;
