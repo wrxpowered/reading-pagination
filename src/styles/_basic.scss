@@ -1,14 +1,13 @@
 .layout {
   font-family: 微软雅黑, 'Microsoft YaHei', Arial, 'PingFang SC', -apple-system, 'Lucida Grande', STheiti, sans-serif;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: none;
-  white-space: pre-line;
+  white-space: normal;
   word-break: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-wrap: break-word;
-  line-break: loose;
+  line-break: auto;
+  hyphens: none;
 }
 
 .layout-viewport {

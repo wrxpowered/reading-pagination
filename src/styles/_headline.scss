@@ -1,9 +1,7 @@
 @mixin headline-basic {
   position: relative;
   text-align: justify;
-  text-justify: inter-ideograph;
-  text-autospace: ideograph-alpha;
-  hyphens: auto;
+  text-justify: distribute;
 }
 
 
