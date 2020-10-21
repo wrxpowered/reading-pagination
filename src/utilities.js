@@ -157,7 +157,7 @@ function createTextualHtml(item) {
         'margin-top': item.offset ? `-${item.offset}px` : undefined
       })
     },
-    item.data.text
+    item.division.html
   );
 }
 

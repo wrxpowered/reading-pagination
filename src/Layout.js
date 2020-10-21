@@ -531,20 +531,22 @@ Layout.prototype = {
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
+        i.division = handleCellSplit(i.data.text);
         i.className = `paragraph-${this.size}`;
         html += createHtmlString(
           'div',
           { 'class': i.className, 'data-id': i.id },
-          i.data.text
+          i.division.html
         );
         return true;
       } else if (checkHeadlineData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
+        i.division = handleCellSplit(i.data.text);
         i.className = `headline-${this.size} headline-level-${i.data.level}`;
         html += createHtmlString(
           'div',
           { 'class': i.className, 'data-id': i.id },
-          i.data.text
+          i.division.html
         );
         return true;
       } else if (checkIllusData(i)) {
@@ -749,7 +751,7 @@ Layout.prototype = {
    * @returns {object} exact division info
    */
   _handleDivision: function (item, lineRange) {
-    const split = handleCellSplit(item.data.text);
+    const split = item.division;
     var element = createElement(
       'div',
       { class: item.className },
