@@ -634,11 +634,9 @@ Layout.prototype = {
    */
   updateSize: function (newSize) {
     if (SIZE_LEVELS.indexOf(newSize) > -1) {
-      if (this.size !== newSize) {
-        this.__proto__.size = newSize;
+      if (Layout.prototype.size !== newSize) {
+        Layout.prototype.size = newSize;
         this.reset();
-      } else {
-        this.log('size level has no change.');
       }
     } else {
       this.log('invalid size level.');
