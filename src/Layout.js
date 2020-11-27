@@ -38,6 +38,7 @@ function Layout(size) {
 Layout.prototype = {
   constructor: Layout,
 
+  version: VERSION,
   size: SIZE_LEVELS[1],
   dom: { viewport: null },
   viewportSize: { w: 0, h: 0 },
