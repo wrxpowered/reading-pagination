@@ -63,12 +63,16 @@ function removeExtraTextSpace(text) {
 function handleCellSplit(text) {
   const result = text.match(WORD_SPLIT_REG_EXP);
   if (result) {
+    let html = '';
+    result.reduce((offset, word) => {
+      html += `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
+      return offset + word.length;
+    }, 0);
+
     return {
       length: result.length,
       group: result,
-      html: result.map(word => {
-        return `<span>${word}</span>`;
-      }).join('')
+      html: html,
     };
   }
   return null;

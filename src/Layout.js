@@ -64,8 +64,8 @@ Layout.prototype = {
     const pageContentHtml = createHtmlString(
       'div',
       {
+        'class': 'layout-page-content',
         'style': createInlineStyleString({
-          'overflow': 'hidden',
           'height': `${page.height}px`
         })
       },
@@ -75,6 +75,7 @@ Layout.prototype = {
     const pageWrapperHtml = createHtmlString(
       'div',
       {
+        'class': 'layout-page-wrapper',
         'style': createInlineStyleString({
           'width': `${this.viewportSize.w}px`,
           'height': `${this.viewportSize.h}px`
@@ -751,6 +752,7 @@ Layout.prototype = {
    */
   _handleDivision: function (item, lineRange) {
     const split = item.division;
+    this.dom.viewport.innerHTML = '';
     var element = createElement(
       'div',
       { class: item.className },

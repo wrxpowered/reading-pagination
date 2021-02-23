@@ -19,3 +19,12 @@
   top: 0;
   bottom: 0;
 }
+
+.layout-page-wrapper {
+  position: relative;
+  user-select: none;
+}
+
+.layout-page-content {
+  overflow: hidden;
+}
