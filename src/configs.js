@@ -25,9 +25,9 @@ const SIZE_LEVELS = ['xs', 's', 'm', 'l', 'xl'];
 
 
 /**
- * 预设 3 级标题梯度
+ * 预设 5 级标题梯度
  */
-const HEADLINE_LEVELS = ['1', '2', '3'];
+const HEADLINE_LEVELS = ['1', '2', '3', '4', '5'];
 
 
 /**
