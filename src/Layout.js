@@ -21,7 +21,8 @@ import {
   checkBrowserEnvironment,
   checkViewportDom,
   handleCellSplit,
-  createElement
+  createElement,
+  getAbstract,
 } from './utilities';
 
 
@@ -44,6 +45,10 @@ Layout.prototype = {
 
   log: function (message) {
     console.log(message);
+  },
+
+  getAbstract: function (...params) {
+    return getAbstract(this.data, ...params);
   },
 
   _createHtmlOutput: function (item) {

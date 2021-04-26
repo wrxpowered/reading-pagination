@@ -208,6 +208,27 @@ function checkViewportDom() {
 }
 
 
+function getAbstract(data, startParaId, startOffset, endParaId, endOffset) {
+  startParaId = +startParaId;
+  endParaId = +endParaId;
+  const items = data.filter(i =>
+    isTextualItem(i.type)
+    && +i.id >= startParaId
+    && +i.id <= endParaId
+  );
+  const text = items.map(i => {
+    if (+i.id === startParaId) {
+      return i.data.text.slice(startOffset);
+    } else if (+i.id === endParaId) {
+      return i.data.text.slice(0, endOffset + 1);
+    } else {
+      return i.data.text;
+    }
+  }).join('\n');
+  return text;
+}
+
+
 export {
   isArrayType,
   isNumberType,
@@ -228,4 +249,5 @@ export {
   createIllusHtml,
   checkBrowserEnvironment,
   checkViewportDom,
+  getAbstract,
 }
