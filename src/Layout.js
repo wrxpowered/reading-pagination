@@ -853,17 +853,17 @@ Layout.prototype = {
 
       return {
         id: item.id,
-        charFrom: split.group.slice(0, cellFrom).join('').length + 1,
-        charTo: split.group.slice(0, cellTo + 1).join('').length,
+        charFrom: split.group.slice(0, cellFrom).join('').length,
+        charTo: split.group.slice(0, cellTo + 1).join('').length - 1,
         text: split.group.slice(cellFrom, cellTo + 1).join(''),
       }
     } catch (error) {
       this.log(`Item ${item.id} text division: boundary guess is out of edge.`);
       return {
         id: item.id,
-        charFrom: 1,
-        charTo: split.length,
-        charOffset: split.length,
+        charFrom: 0,
+        charTo: split.length - 1,
+        charOffset: split.length - 1,
         text: item.data.text,
       }
     }
