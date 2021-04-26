@@ -1,11 +1,14 @@
 import {
+  FORMAT,
   SIZE_LEVELS,
   ILLUS_RATIO,
-  NON_BLANK_CHAR_REG_EXP
+  NON_BLANK_CHAR_REG_EXP,
+  UNICODE_PUNCTUATION_REG_EXP,
 } from './configs';
 import {
   isArrayType,
   isNumberType,
+  isStringType,
   isTextualItem,
   checkParagraphData,
   checkHeadlineData,
@@ -1059,6 +1062,151 @@ Layout.prototype = {
       itemTo,
       textualItems: textArr
     }
+  },
+
+
+  highlightKeywordFromPage: function (pageIndex, keyword) {
+    // 参数检查
+    const page = this.pageGroup[pageIndex];
+    if (!page) { return ''; }
+    if (!isStringType(keyword)) { return page.html; }
+
+    // 检索词格式化
+    const reg = UNICODE_PUNCTUATION_REG_EXP;
+    keyword = keyword.replace(reg, '');
+    if (!keyword) { return page.html; }
+    keyword = keyword.toLowerCase();
+
+    // 创建一个不包含空白与标点符的文本段落副本
+    let wholePagePureText = '';
+    let pureDivision = [];
+    page.items.reduce((prevOffset, i) => {
+      if (i.type === FORMAT.PARAGRAPH || i.type === FORMAT.HEADLINE) {
+        const pureGroup = i.division.group.map(word => word.replace(reg, ''));
+        const pureText = pureGroup.join('').toLowerCase();
+        const offset = prevOffset + pureText.length;
+        wholePagePureText += pureText;
+        pureDivision.push({
+          group: pureGroup,
+          html: i.division.html,
+          pureText: pureText,
+          offsetFrom: prevOffset,
+        });
+        return offset;
+      } else {
+        pureDivision.push(null);
+        return prevOffset;
+      }
+    }, 0);
+
+    // 整页纯文本匹配
+    let charPos = []; // 匹配到的字符位置集
+    let pos = wholePagePureText.indexOf(keyword);
+    while (pos > -1) {
+      charPos.push(pos);
+      pos = wholePagePureText.indexOf(keyword, pos + 1);
+    }
+
+    // 整页匹配结果细化到段落内的匹配结果
+    if (charPos.length > 0) {
+      let charPosMap = {};
+      pureDivision.forEach((para, paraIndex) => {
+        if (!para) { return; } // 忽略非文本段落
+
+        // 检查段落内是否包含匹配结果
+        const paraFrom = para.offsetFrom;
+        const paraTo = para.offsetFrom + para.pureText.length - 1;
+        charPos.forEach(pos => {
+          const charFrom = pos;
+          const charTo = pos + keyword.length - 1;
+
+          const addToMap = (value) => {
+            if (charPosMap[paraIndex]) { 
+              charPosMap[paraIndex].push(value); 
+            } else {
+              charPosMap[paraIndex] = [value];
+            }
+          }
+
+          if (charFrom >= paraFrom && charTo <= paraTo) {
+            // 匹配结果为段落子集
+            addToMap({ isAcross: false, from: charFrom, to: charTo });
+          } else if (charFrom < paraFrom && charTo >= paraFrom && charTo <= paraTo) {
+            // 匹配结果与段落交集：跨段首
+            addToMap({ isAcross: true, from: paraFrom, to: charTo });
+          } else if (charFrom >= paraFrom && charFrom <= paraTo && charTo > paraTo) {
+            // 匹配结果与段落交集：跨段尾
+            addToMap({ isAcross: true, from: charFrom, to: paraTo });
+          } else if (charFrom < paraFrom && charTo > paraTo) {
+            // 匹配结果为段落父集
+            addToMap({ isAcross: true, from: paraFrom, to: paraTo });
+          }
+        });
+
+        // 匹配对应的单词
+        if (charPosMap[paraIndex]) {
+          let wordPos = []; // 匹配到的单词位置集
+          let wordPosMap = {};
+          para.group.reduce((sum, word, index) => {
+            if (!word) { return sum; }
+            const start = charPosMap[paraIndex].filter(i => (
+              i.from >= sum && i.from <= sum + word.length - 1
+            ));
+            if (start.length > 0) {
+              wordPosMap[start[0].from] = [index];
+            }
+            const end = charPosMap[paraIndex].filter(i => (
+              i.to >= sum && i.to <= sum + word.length - 1
+            ));
+            if (end.length > 0) {
+              wordPosMap[end[0].from].push(index);
+            }
+            return sum + word.length;
+          }, para.offsetFrom);
+
+          for (let prop in wordPosMap) {
+            if (wordPosMap[prop].length === 2) {
+              // 排除同一个单词内多次匹配的情况
+              wordPos.push(wordPosMap[prop]);
+            }
+          }
+
+          // 重新生成段落 html
+          para.html = page.items[paraIndex].division.group.map((word, index) => {
+            const result = wordPos.filter(i => (
+              index >= i[0]
+              && index <= i[1]
+              && word === para.group[index]
+            ));
+            const offset = page.items[paraIndex].division.offsets[index];
+            if (result.length > 0) {
+              return `<span class="word" data-length="${word.length}" data-offset="${offset}" style="color: red">${word}</span>`;
+            } else {
+              return `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
+            }
+          }).join('');
+        }
+      });
+    }
+
+    const contentHtml = page.items.map((item, index) => {
+      return this._createHtmlOutput(
+        Object.assign(
+          {},
+          item,
+          { division: pureDivision[index] }
+        )
+      );
+    }).join('');
+
+    const pageHtml = this._wrapPageContentHtml(
+      Object.assign(
+        {},
+        page,
+        { html: contentHtml }
+      )
+    );
+    return pageHtml;
   },
 }
 
