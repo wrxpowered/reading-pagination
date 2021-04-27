@@ -880,28 +880,6 @@ Layout.prototype = {
 
 
   /**
-   * extract and concat text of different paragraphs fron page
-   * @param {number} pageIndex
-   * @param {string} separator
-   * @param {number} textLength
-   * @returns {string|null}
-   */
-  extractTextFromPage: function (pageIndex, separator = ' ', textLength) {
-    const result = this.extractFromPage(pageIndex);
-    if (result === null) { return ''; }
-
-    const text = result.textualItems.join(separator);
-    var concatText = removeExtraTextSpace(text);
-    if (isNumberType(textLength)) {
-      concatText = concatText.slice(0, textLength);
-    }
-
-    return concatText;
-  },
-
-
-
-  /**
    * extract textual content from a page
    * 
    * if a page is paginated, the divided text content will be captured.
