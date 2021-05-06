@@ -540,7 +540,7 @@ Layout.prototype = {
     this.data = data.filter((i, index) => {
       if (checkParagraphData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
-        i.division = handleCellSplit(i.data.text);
+        i.division = handleCellSplit(i.data.text, this.size, i.type);
         i.className = `paragraph-${this.size}`;
         html += createHtmlString(
           'div',
@@ -550,7 +550,7 @@ Layout.prototype = {
         return true;
       } else if (checkHeadlineData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
-        i.division = handleCellSplit(i.data.text);
+        i.division = handleCellSplit(i.data.text, this.size, i.type, i.data.level);
         i.className = `headline-${this.size} headline-level-${i.data.level}`;
         html += createHtmlString(
           'div',

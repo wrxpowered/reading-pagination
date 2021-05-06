@@ -1,4 +1,16 @@
-import { VIEWPORT_DOM, HEADLINE_LEVELS, FORMAT, WORD_SPLIT_REG_EXP } from './configs';
+import { 
+  VIEWPORT_DOM, 
+  HEADLINE_LEVELS, 
+  FORMAT, 
+  HEADLINE_LEVEL_MAP,
+  HEADLINE_FONT_SIZE_MAP,
+  PARAGRAPH_FONT_SIZE_MAP,
+  WORD_SPLIT_REG_EXP,
+  ANNOTATION_REG_EXP,
+  ICON_REG_EXP,
+  ANNOTATION_ICON,
+} from './configs';
+import { parseUrl } from './queryString';
 
 
 function isArrayType(arg) {
@@ -60,18 +72,122 @@ function removeExtraTextSpace(text) {
 }
 
 
-function handleCellSplit(text) {
-  const result = text.match(WORD_SPLIT_REG_EXP);
+/**
+ * 
+ * @param {string} size 排版尺寸
+ * @param {string} type 段落类型
+ * @param {string} level （可选）标题级别
+ */
+function getFontSize(layoutSize, itemType, headlineLevel) {
+  switch (itemType) {
+    case FORMAT.PARAGRAPH:
+      return PARAGRAPH_FONT_SIZE_MAP[layoutSize];
+    case FORMAT.HEADLINE:
+      return (
+        HEADLINE_FONT_SIZE_MAP[layoutSize]
+        + HEADLINE_LEVEL_MAP[headlineLevel]
+      );
+    default:
+      break;
+  }
+}
+
+
+// 计算图标宽高
+function calculateIconSize(origWidth, origHeight, height) {
+  origWidth = +origWidth;
+  origHeight = +origHeight;
+  height = +height;
+  let fitRatio = height / origHeight;
+  if (fitRatio > 1) { fitRatio = 1; }
+  return {
+    zoomedWidth: origWidth * fitRatio,
+    zoomedHeight: origHeight * fitRatio,
+  }
+}
+
+
+function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
+  var pureText = text;
+
+  function handleIcon(regExp, htmlHandler) {
+    var map = {};
+    pureText = pureText.replace(regExp, (...args) => {
+      const offset = args[4];
+      let position;
+      if (offset === 0) {
+        position = -1;
+      } else {
+        position = pureText.slice(0, offset)
+                  .replace(ICON_REG_EXP, '')
+                  .replace(ANNOTATION_REG_EXP, '')
+                  .match(WORD_SPLIT_REG_EXP).length - 1;
+      }
+      const content = args[2];
+      const html = htmlHandler(content);
+      if (map[position]) {
+        map[position].push(html);
+      } else {
+        map[position] = [html];
+      }
+      return '';
+    });
+    return map;
+  }
+
+  // 处理图标
+  var iconMap = handleIcon(ICON_REG_EXP, (link) => {
+    const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
+    const { url, query } = parseUrl(link);
+    const size = calculateIconSize(query.width, query.height, fontSize);
+    return createHtmlString(
+      'img',
+      {
+        'class': 'icon',
+        'src': url,
+        'style': createInlineStyleString({
+          'width': `${size.zoomedWidth}px`,
+          'height': `${size.zoomedHeight}px`,
+        })
+      },
+    );
+  });
+
+  // 处理注释
+  var annotationMap = handleIcon(ANNOTATION_REG_EXP, (content) => {
+    return createHtmlString(
+      'img',
+      {
+        'class': 'mark',
+        'src': ANNOTATION_ICON,
+        'data-id': content,
+        'data-annotation': content,
+      }
+    );
+  });
+
+  // 拼接 HTML
+  const result = pureText.match(WORD_SPLIT_REG_EXP);
+  let offsets = [];
   if (result) {
     let html = '';
-    result.reduce((offset, word) => {
+    if (iconMap['-1']) { html += iconMap['-1'].join(''); }
+    result.reduce((offset, word, index) => {
+      offsets.push(offset);
       html += `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
+      if (iconMap[index]) {
+        html += iconMap[index].join('');
+      }
+      if (annotationMap[index]) {
+        html += annotationMap[index].join('');
+      }
       return offset + word.length;
     }, 0);
 
     return {
       length: result.length,
       group: result,
+      offsets: offsets,
       html: html,
     };
   }
