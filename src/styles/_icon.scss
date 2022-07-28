@@ -3,11 +3,11 @@
   max-height: 1em;
   width: auto;
   padding: 0 5px;
-  overflow: hidden;
   transform: translate(0px, 12.5%);
 }
 
-.mark {
-  @extend .icon;
-  padding: 0 3px;
-}
+// @todo 整合注释
+// .mark {
+//   @extend .icon;
+//   padding: 0 3px;
+// }

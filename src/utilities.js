@@ -136,9 +136,9 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
   }
 
   // 处理图标
-  var iconMap = handleIcon(ICON_REG_EXP, (link) => {
+  var iconMap = handleIcon(ICON_REG_EXP, (url) => {
     const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
-    const { url, query } = parseUrl(link);
+    const { query } = parseUrl(url);
     const size = calculateIconSize(query.width, query.height, fontSize);
     return createHtmlString(
       'img',
@@ -155,13 +155,21 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
 
   // 处理注释
   var annotationMap = handleIcon(ANNOTATION_REG_EXP, (content) => {
+    // @todo 整合注释
+    // return createHtmlString(
+    //   'img',
+    //   {
+    //     'class': 'mark',
+    //     'src': ANNOTATION_ICON,
+    //     'data-id': content,
+    //     'data-annotation': content,
+    //   }
+    // );
     return createHtmlString(
-      'img',
+      'span',
       {
         'class': 'mark',
-        'src': ANNOTATION_ICON,
         'data-id': content,
-        'data-annotation': content,
       }
     );
   });
