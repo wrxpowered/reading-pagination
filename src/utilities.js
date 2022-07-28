@@ -136,9 +136,9 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
   }
 
   // 处理图标
-  var iconMap = handleIcon(ICON_REG_EXP, (url) => {
+  var iconMap = handleIcon(ICON_REG_EXP, (link) => {
     const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
-    const { query } = parseUrl(url);
+    const { url, query } = parseUrl(link);
     const size = calculateIconSize(query.width, query.height, fontSize);
     return createHtmlString(
       'img',
