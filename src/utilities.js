@@ -97,6 +97,8 @@ function getFontSize(layoutSize, itemType, headlineLevel) {
 function calculateIconSize(origWidth, origHeight, height) {
   origWidth = +origWidth;
   origHeight = +origHeight;
+  if (isNaN(origWidth) || isNaN(origHeight)) { return null; }
+
   height = +height;
   let fitRatio = height / origHeight;
   if (fitRatio > 1) { fitRatio = 1; }
@@ -140,6 +142,7 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
     const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
     const { url, query } = parseUrl(link);
     const size = calculateIconSize(query.width, query.height, fontSize);
+    if (!size) { return ''; }
     return createHtmlString(
       'img',
       {
