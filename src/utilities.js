@@ -146,7 +146,7 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
     return createHtmlString(
       'img',
       {
-        'class': 'icon',
+        'class': 'layout-icon',
         'src': url,
         'style': createInlineStyleString({
           'width': `${size.zoomedWidth}px`,
