@@ -151,7 +151,8 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
         'style': createInlineStyleString({
           'width': `${size.zoomedWidth}px`,
           'height': `${size.zoomedHeight}px`,
-        })
+        }),
+        'draggable': 'false',
       },
     );
   });
