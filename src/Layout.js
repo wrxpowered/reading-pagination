@@ -15,6 +15,7 @@ import {
   checkIllusData,
   checkPagebreakData,
   removeExtraTextSpace,
+  getPureText,
   getBoundaryHeight,
   getBoxModelValue,
   createInlineStyleString,
@@ -766,6 +767,7 @@ Layout.prototype = {
       split.html
     );
     this.dom.viewport.appendChild(element);
+    const childNodes = element.querySelectorAll('.word');
 
     // get a non-blank char index forward or backward
     function getValidCharIndex(index, direction) {
@@ -796,7 +798,7 @@ Layout.prototype = {
         if (halfPos === null) { return false; }
 
         let line = Math.ceil(
-          (element.childNodes[halfPos].offsetTop - item.baseline.paddingTop) / item.baseline.computedLineHeight
+          (childNodes[halfPos].offsetTop - item.baseline.paddingTop) / item.baseline.computedLineHeight
         );
         if (!isValidLine(line)) { return false; }
 
@@ -825,7 +827,7 @@ Layout.prototype = {
         if (charPos === null) { return false; }
 
         let currentLine = Math.ceil(
-          (element.childNodes[charPos].offsetTop - item.baseline.paddingTop)
+          (childNodes[charPos].offsetTop - item.baseline.paddingTop)
           / item.baseline.computedLineHeight
         );
         if (!isValidLine(currentLine)) { return false; }
@@ -948,7 +950,7 @@ Layout.prototype = {
     undividedTextArr = page.items
       .slice(undividedPos[0], undividedPos[1] + 1)
       .filter(i => isTextualItem(i.type))
-      .map(i => i.data.text);
+      .map(i => getPureText(i.data.text));
 
 
     /**
