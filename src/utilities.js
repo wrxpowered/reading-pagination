@@ -9,6 +9,7 @@ import {
   ANNOTATION_REG_EXP,
   ICON_REG_EXP,
   ANNOTATION_ICON,
+  SUPERSCRIPT_REG_EXP,
 } from './configs';
 import { parseUrl } from './queryString';
 
@@ -86,7 +87,7 @@ function removeExtraTextSpace(text) {
 
 
 function getPureText(text) {
-  return text.replace(ICON_REG_EXP, '').replace(ANNOTATION_REG_EXP, '');
+  return text.replace(ICON_REG_EXP, '').replace(ANNOTATION_REG_EXP, '').replace(SUPERSCRIPT_REG_EXP, '');
 }
 
 
@@ -196,6 +197,12 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
     );
   });
 
+  // 处理上标
+  var supMap = handleIcon(SUPERSCRIPT_REG_EXP, (content) => {
+    if (!content) { return ''; }
+    return `<sup class="sup">${content}</sup>`;
+  });
+
   // 拼接 HTML
   const result = pureText.match(WORD_SPLIT_REG_EXP);
   let offsets = [];
@@ -210,6 +217,9 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
       }
       if (annotationMap[index]) {
         html += annotationMap[index].join('');
+      }
+      if (supMap[index]) {
+        html += supMap[index].join('');
       }
       return offset + word.length;
     }, 0);
