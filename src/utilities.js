@@ -116,6 +116,7 @@ function calculateIconSize(origWidth, origHeight, fontSize) {
 
 function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
   var pureText = text;
+  const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
 
   function handleIcon(regExp, htmlHandler) {
     var map = {};
@@ -142,21 +143,21 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
 
   // 处理图标
   var iconMap = handleIcon(ICON_REG_EXP, (link) => {
-    const fontSize = getFontSize(layoutSize, itemType, headlineLevel);
     const { query } = parseUrl(link);
     const size = calculateIconSize(query.width, query.height, fontSize);
     if (!size) { return ''; }
     return createHtmlString(
-      'img',
+      'span',
       {
         'class': 'layout-icon',
-        'src': link,
         'style': createInlineStyleString({
-          'width': `${size.zoomedWidth}px`,
-          'height': `${size.zoomedHeight}px`,
-        }),
-        'draggable': 'false',
-      },
+          'padding-left': `${size.zoomedWidth}px`,
+          'padding-right': `${fontSize / 3}px`,
+          'background': `url(${link}) no-repeat`,
+          'background-size': `${size.zoomedWidth}px ${size.zoomedHeight}px`,
+          'background-position': 'center',
+        })
+      }
     );
   });
 
