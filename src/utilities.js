@@ -23,6 +23,19 @@ function isStringType(arg) {
   return Object.prototype.toString.call(arg) === '[object String]';
 }
 
+function isElement(o) {
+  return (
+    typeof HTMLElement === "object" ? (
+      o instanceof HTMLElement
+    ) : (
+      typeof o === "object"
+      && o !== null
+      && o.nodeType === 1
+      && typeof o.nodeName === "string"
+    )
+  );
+}
+
 
 function isTextualItem(type) {
   return type === FORMAT.PARAGRAPH || type === FORMAT.HEADLINE;
@@ -366,6 +379,7 @@ export {
   isArrayType,
   isNumberType,
   isStringType,
+  isElement,
   isTextualItem,
   checkParagraphData,
   checkHeadlineData,
