@@ -2,9 +2,14 @@
   display: inline;
   max-height: 1em;
   width: auto;
-  padding: 0 5px;
+  padding: 0 2px;
   overflow: hidden;
   transform: translate(0px, 12.5%);
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -o-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
+  image-rendering: crisp-edges;
 }
 
 // @todo 整合注释
