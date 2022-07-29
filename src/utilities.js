@@ -153,7 +153,8 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
         'style': createInlineStyleString({
           'padding-left': `${size.zoomedWidth}px`,
           'padding-right': `${fontSize / 3}px`,
-          'background': `url(${link}) no-repeat`,
+          'background-image': "url(" + link.replace(/(\r\n|\n|\r)/gm, "") + ")",
+          'background-repeat': 'no-repeat',
           'background-size': `${size.zoomedWidth}px ${size.zoomedHeight}px`,
           'background-position': 'center',
         })
