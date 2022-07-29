@@ -32,6 +32,7 @@ import {
 
 function Layout(size) {
   this.data = [];
+  this.lastDataLength = 0;
   this.pageGroup = [];
   this.pageMap = {};
   if (size) {
@@ -469,7 +470,6 @@ Layout.prototype = {
     if (value.boxSizing === 'content-box') {
       this.viewportSize.w = value.width;
       this.viewportSize.h = value.height;
-      this.reset();
       return true;
     } else {
       this.log('use content-box box model instead of border-box, avoid an inconsistent issue in IE browser.');
@@ -538,7 +538,8 @@ Layout.prototype = {
    */
   _initData: function (data, isPrecomputed) {
     var html = '';
-    this.data = data.filter((i, index) => {
+    this.lastDataLength = this.data.length;
+    this.data.push(...data.filter((i, index) => {
       if (checkParagraphData(i)) {
         i.data.text = removeExtraTextSpace(i.data.text);
         i.division = handleCellSplit(i.data.text, this.size, i.type);
@@ -569,7 +570,7 @@ Layout.prototype = {
       }
       this.log(`item of index: ${index} will be ignored which is invalid format.`);
       return false;
-    });
+    }));
     return html;
   },
 
@@ -577,11 +578,21 @@ Layout.prototype = {
   /**
    * compose data with pagination
    * @param {array} data source data
+   * @param {boolean} isUnfinished continue with last render data when set true
    * @returns {array} paginated content
    */
-  render: function (data) {
+  render: function (data, isUnfinished) {
     if (!this._checkSourceData(data)) { return []; }
     if (!this._checkEnvironment()) { return null; }
+    if (isUnfinished) {
+      // remove wrapper html of last page
+      let lastPage = this.pageGroup[this.pageGroup.length - 1];
+      if (lastPage) {
+        lastPage.html = lastPage.items.map(i => this._createHtmlOutput(i)).join('');
+      }
+    } else {
+      this.reset();
+    }
 
     // create html string and append to template DOM node
     try {
@@ -592,10 +603,10 @@ Layout.prototype = {
     }
 
     // paginate content
-    this._pushEmptyPage();
+    if (this.pageGroup.length === 0) { this._pushEmptyPage(); }
     var nodes = this.dom.viewport.childNodes;
     for (let i = 0, len = nodes.length; i < len; i++) {
-      let item = this.data[i];
+      let item = this.data[i + this.lastDataLength];
       switch (item.type) {
         case 'paragraph':
           this._handleText(item, nodes[i]);
