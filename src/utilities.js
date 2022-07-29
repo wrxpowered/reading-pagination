@@ -305,7 +305,7 @@ function createInlineStyleString(attr) {
 function createHtmlString(type, attr, childrenString = '') {
   let attrStr = '';
   for (let key in attr) {
-    if (attr[key]) {
+    if (attr[key] !== undefined || attr[key] !== null || attr[key] !== '') {
       attrStr += ` ${key}="${attr[key]}"`;
     }
   }
