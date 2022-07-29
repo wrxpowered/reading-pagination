@@ -16,4 +16,8 @@
       #{$prop}: map-get($map, $prop);
     }
   }
+  .paragraph-#{$size}-boundaryless {
+    margin-bottom: 0;
+    padding-bottom: map-get($map, $key: margin-bottom);
+  }
 }

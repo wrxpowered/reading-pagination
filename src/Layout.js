@@ -513,6 +513,7 @@ Layout.prototype = {
         )
       );
     }
+    // just a placeholder
     return createHtmlString(
       'div',
       { 'class': i.className, 'data-id': i.id },
@@ -544,6 +545,9 @@ Layout.prototype = {
         i.data.text = removeExtraTextSpace(i.data.text);
         i.division = handleCellSplit(i.data.text, this.size, i.type);
         i.className = `paragraph-${this.size}`;
+        if (isPrecomputed) {
+          i.className += ` paragraph-${this.size}-boundaryless`;
+        }
         html += createHtmlString(
           'div',
           { 'class': i.className, 'data-id': i.id },
@@ -562,6 +566,9 @@ Layout.prototype = {
         return true;
       } else if (checkIllusData(i)) {
         i.className = `illus-${this.size}`;
+        if (isPrecomputed) {
+          i.className += ` illus-${this.size}-boundaryless`;
+        }
         html += this._initIllusData(i, isPrecomputed);
         return true;
       } else if (checkPagebreakData(i)) {
