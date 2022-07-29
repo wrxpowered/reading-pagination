@@ -199,9 +199,9 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
   // 拼接 HTML
   const result = pureText.match(WORD_SPLIT_REG_EXP);
   let offsets = [];
+  let html = '';
+  if (iconMap['-1']) { html += iconMap['-1'].join(''); }
   if (result) {
-    let html = '';
-    if (iconMap['-1']) { html += iconMap['-1'].join(''); }
     result.reduce((offset, word, index) => {
       offsets.push(offset);
       html += `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
@@ -221,7 +221,12 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
       html: html,
     };
   }
-  return null;
+  return {
+    length: 0,
+    group: [],
+    offsets: [],
+    html: html
+  };
 }
 
 
