@@ -140,8 +140,12 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
       if (offset === 0) {
         position = -1;
       } else {
-        position = getPureText(pureText.slice(0, offset))
-                  .match(WORD_SPLIT_REG_EXP).length - 1;
+        var group = getPureText(pureText.slice(0, offset)).match(WORD_SPLIT_REG_EXP);
+        if (group) {
+          position = group.length - 1;
+        } else {
+          position = -1;
+        }
       }
       const content = args[2];
       const html = htmlHandler(content);
