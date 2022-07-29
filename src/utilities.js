@@ -72,6 +72,11 @@ function removeExtraTextSpace(text) {
 }
 
 
+function getPureText(text) {
+  return text.replace(ICON_REG_EXP, '').replace(ANNOTATION_REG_EXP, '');
+}
+
+
 /**
  * 
  * @param {string} size 排版尺寸
@@ -120,9 +125,7 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
       if (offset === 0) {
         position = -1;
       } else {
-        position = pureText.slice(0, offset)
-                  .replace(ICON_REG_EXP, '')
-                  .replace(ANNOTATION_REG_EXP, '')
+        position = getPureText(pureText.slice(0, offset))
                   .match(WORD_SPLIT_REG_EXP).length - 1;
       }
       const content = args[2];
@@ -367,6 +370,7 @@ export {
   checkIllusData,
   checkPagebreakData,
   removeExtraTextSpace,
+  getPureText,
   handleCellSplit,
   getBoundaryHeight,
   getBoxModelValue,
