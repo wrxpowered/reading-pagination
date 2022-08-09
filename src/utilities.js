@@ -8,7 +8,6 @@ import {
   WORD_SPLIT_REG_EXP,
   ANNOTATION_REG_EXP,
   ICON_REG_EXP,
-  ANNOTATION_ICON,
   SUPERSCRIPT_REG_EXP,
 } from './configs';
 import { parseUrl } from './queryString';
