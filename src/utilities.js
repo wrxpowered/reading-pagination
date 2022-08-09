@@ -181,22 +181,12 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
 
   // 处理注释
   var annotationMap = handleIcon(ANNOTATION_REG_EXP, (content) => {
-    // @todo 整合注释
-    // return createHtmlString(
-    //   'img',
-    //   {
-    //     'class': 'mark',
-    //     'src': ANNOTATION_ICON,
-    //     'data-id': content,
-    //     'data-annotation': content,
-    //   }
-    // );
     return createHtmlString(
       'span',
       {
-        'class': 'mark',
-        'data-id': content,
-      }
+        'class': 'annotation',
+        'data-annotation': encodeURIComponent(content),
+      },
     );
   });
 
@@ -299,6 +289,34 @@ function createInlineStyleString(attr) {
   }
   return str;
 }
+
+
+function encodeHtmlString (str) {
+  if (typeof str == 'string') {
+    return str.replace(/<|&|>/g, function (matches) {
+      return ({
+        '<': '&lt;',
+        '>': '&gt;',
+        '&': '&amp;'
+      })[matches];
+    });
+  }
+  return '';
+};
+
+
+function decodeHtmlString (str) {
+  if (typeof str == 'string') {
+    return str.replace(/&lt;|&gt;|&amp;/g, function (matches) {
+      return ({
+        '&lt;': '<',
+        '&gt;': '>',
+        '&amp;': '&'
+      })[matches];
+    });
+  }
+  return '';
+};
 
 
 function createHtmlString(type, attr, childrenString = '') {
@@ -410,6 +428,8 @@ export {
   getBoxModelValue,
   createElement,
   createInlineStyleString,
+  encodeHtmlString,
+  decodeHtmlString,
   createHtmlString,
   createTextualHtml,
   createIllusHtml,

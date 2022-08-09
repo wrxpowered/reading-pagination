@@ -6,11 +6,55 @@
   image-rendering: crisp-edges;
 }
 
-// @todo 整合注释
-// .mark {
-//   @extend .icon;
-//   padding: 0 3px;
-// }
+.annotation {
+  @extend .layout-icon;
+  position: relative;
+  padding: 0 0.5em;
+  margin-left: 2px;
+  margin-right: 2px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEGElEQVRYhbWXX0xbdRTHP2UUWkZbWqGwshUYuGbi2BxhW4bJNCzG4J9nTfRJFp992Xw0Pqkv+uCDD+7BZIm+LRrFP3FZdKJmRtxQJPzp2Mr+0MEYbfk3Wqc5t792t7f3thcH3+Tm3vv7nd855557/jq+/vAkNlELPAc8DRwA2gCfOpoApoFLwHngK2DJDttKGzQdwCngZWC7BU1QXYeB14Fl4FPgXWCqFPOKEnsu4B1gFBgoIdwM29WZUaWEa6MKtAO/qC+v2oBgI+TsScWrw64CB4Eh+c++xpaS3GW/rfs4TldZ44jP/KR4l1RAtPwGaJQXb3Anx0+8zZ6jz5sKScSvkVlf5dirpzSaMmhUvAssse2V/t7csxv4DtidW0jeniGdXidy5Bn8od3cGLtYJEJoPA3NhDt7qHC6uDMzUUoN+YqngE+AjNECbwH7jSdm/hxiLjaJv2mXJde/fzhLZv0e4c5D5awg6FKyNOQsIE53Rt7NTszHxolfGeX+PxkCoQ5WEvMF+/czaf51bMPhcHBrYrhgT3wk2PaY0TKHVJgu5PLAm4DTSuX02jKJteWsw1W7COxsN6VL3Zkt8gWxSmVVNW5PHZe/PZNbdiqZA6KARyWZPHbt6yW05wnu3rrK9PB5TQFBINTK2IXPqfHWFwmP9PZr9/GhwYL1hevR7EfcWzEeeQl4QxToNyYZ+e/J29fpefE1GloiXDz7EY+EIyzcvMrK4px2GdHe06etzMfGrAxphMjsFyfsM9uVEIsO/4gnEMQXDNMcOUg8etkuc7voq1ReaYrp378nNXeDleQ8rlqf6Zc/JLoqVARYQkzaeuAYsb9+3WzhgnZRwFuOKvRoF7OTlzbMXbJn9wsDpVK1t2w5loi4OxvLR4K8uz3+Ijp3bbY10Iehf0erlsAkVf/2xWnNr4wQBZJAcVwphB8/ws2JB84nCcUsDCVa0IWd8dmYvBSSokDUSoH68F4tCvTev4lhKIiKD4wYV+WfifCW/b2sLSW3wvtzGBEFzpntuH0B/E1hVpcSWyVccE4UGFQ9XB7icNkqOJF3ri2A5OZBUSAFfGbGfzW1iKvWS01dw1YoINUwlesHpPlMW1Gaeb1diD9JFTUgrZrVfFsurfP7qoHMo7LqQTMrjKQmWEFKLipy9Gje282Ojn1465v05fgDYFKvAKpLeVZfG6T2C6QWiF9Y9QGCuWvj2t1II7/xyh8Xspasa5CIGtF3RMbJSBrGnyWv5A44q2tMM9j/hMTzUf2wYuyKp5QV4qiks4nC44p3waRkNhdIU/ekWYJ6CIwonsNGFlaT0ZSa894rFR02kFY8DlvNiKVmwzU1mnUCH6vEYRerwGl1VngIL1PYmY4lXE5IAwlIrdWP53WKZtEwnn9pazwH/gMjmUVf4wqM2AAAAABJRU5ErkJggg==) no-repeat;
+  background-size: 1em;
+  background-position: center;
+  overflow: hidden;
+}
+
+.annotation-popper {
+  position: absolute;
+  color: #464646;
+  background-color: #f2ebd9;
+  font-size: 14px;
+  font-style: normal;
+  z-index: 1;
+  padding: 1em;
+  border-radius: 3px;
+  &[data-popper-placement^='top'] > .annotation-arrow {
+    bottom: -4px;
+  }
+  &[data-popper-placement^='bottom'] > .annotation-arrow {
+    top: -4px;
+  }
+  &[data-popper-placement^='left'] > .annotation-arrow {
+    right: -4px;
+  }
+  &[data-popper-placement^='right'] > .annotation-arrow {
+    left: -4px;
+  }
+}
+
+.annotation-arrow {
+  visibility: hidden;
+  &, &::before {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: inherit;
+  }
+  &::before {
+    visibility: visible;
+    content: '';
+    transform: rotate(45deg);
+  }
+}
 
 .sup {
   font-size: 75%;
