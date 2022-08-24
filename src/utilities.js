@@ -8,8 +8,8 @@ import {
   WORD_SPLIT_REG_EXP,
   ANNOTATION_REG_EXP,
   ICON_REG_EXP,
-  ANNOTATION_ICON,
   SUPERSCRIPT_REG_EXP,
+  GRAPH_HTML_REG_EXP,
 } from './configs';
 import { parseUrl } from './queryString';
 
@@ -403,6 +403,69 @@ function getAbstract(data, startParaId, startOffset, endParaId, endOffset) {
 }
 
 
+function highlightKeywordFromPara(paraInnerHtml, keyword) {
+  if (!isStringType(keyword) || !paraInnerHtml) { return null; }
+  keyword = keyword.trim();
+  if (!keyword) { return null; }
+
+  const fragments = paraInnerHtml.split(GRAPH_HTML_REG_EXP);
+  const wrapHighlight = text => `<span style="color: red;">${text}</span>`
+
+  // pure text
+  if (fragments.length === 1) {
+    return paraInnerHtml.replace(new RegExp(keyword, 'g'), wrapHighlight(keyword));
+  }
+
+  // mixed content: both text and inline graph html
+  var arr = [], map = {};
+  fragments.reduce((prev, curr, index) => {
+    if (GRAPH_HTML_REG_EXP.test(curr)) {
+      arr.push(curr);
+      return prev;
+    }
+
+    // detect between text fragment
+    if (curr.indexOf(keyword) > -1) {
+      arr.push(curr.replace(new RegExp(keyword, 'g'), wrapHighlight(keyword)));
+    } else {
+      arr.push(curr);
+    }
+
+    // detect in two text fragments' boundary
+    map[index] = { from: prev.length > 0 ? prev.length : 0 };
+    map[index].to = map[index].from + curr.length - 1;
+
+    const sum = prev + curr;
+    if (!prev || keyword.length === 1) { return sum; }
+    let posFrom = prev.lastIndexOf(keyword) + keyword.length;
+    if (posFrom === keyword.length - 1) { posFrom = 0; }
+    let posTo = curr.indexOf(keyword) - 1;
+    if (posTo === -2) { posTo = curr.length - 1; }
+    if (prev.length > 0) { posTo += prev.length; }
+    if (posFrom > posTo) { return sum; }
+
+    const from = sum.slice(posFrom, posTo + 1).indexOf(keyword) + posFrom;
+    if (from > -1 + posFrom) {
+      const to = from + keyword.length - 1;
+      for (let i in map) {
+        if (from >= map[i].from && from <= map[i].to) {
+          const rightFrom = (arr[i].length - 1) - (map[i].to - from);
+          arr[i] = arr[i].slice(0, rightFrom) + wrapHighlight(arr[i].slice(rightFrom));
+        } else if (from < map[i].from && to > map[i].to) {
+          arr[i] = wrapHighlight(arr[i]);
+        } else if (to >= map[i].from && to <= map[i].to) {
+          const leftTo = to - map[i].from;
+          arr[i] = wrapHighlight(arr[i].slice(0, leftTo + 1)) + arr[i].slice(leftTo + 1);
+        }
+      }
+    }
+    return sum;
+  }, '');
+
+  return arr.join('');
+}
+
+
 export {
   isArrayType,
   isNumberType,
@@ -426,4 +489,5 @@ export {
   checkBrowserEnvironment,
   checkViewportDom,
   getAbstract,
+  highlightKeywordFromPara,
 }
