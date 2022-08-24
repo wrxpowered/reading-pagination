@@ -210,20 +210,27 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
   // 拼接 HTML
   const result = pureText.match(WORD_SPLIT_REG_EXP);
   let offsets = [];
-  let html = '';
-  if (iconMap['-1']) { html += iconMap['-1'].join(''); }
+  let textHtml = '', elementHtml = '';
+  if (iconMap['-1']) {
+    textHtml += iconMap['-1'].join('');
+    elementHtml += iconMap['-1'].join('');
+  }
   if (result) {
     result.reduce((offset, word, index) => {
       offsets.push(offset);
-      html += `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
+      textHtml += word;
+      elementHtml += `<span class="word" data-length="${word.length}" data-offset="${offset}">${word}</span>`;
       if (iconMap[index]) {
-        html += iconMap[index].join('');
+        textHtml += iconMap[index].join('');
+        elementHtml += iconMap[index].join('');
       }
       if (annotationMap[index]) {
-        html += annotationMap[index].join('');
+        textHtml += annotationMap[index].join('');
+        elementHtml += annotationMap[index].join('');
       }
       if (supMap[index]) {
-        html += supMap[index].join('');
+        textHtml += supMap[index].join('');
+        elementHtml += supMap[index].join('');
       }
       return offset + word.length;
     }, 0);
@@ -232,14 +239,16 @@ function handleCellSplit(text, layoutSize, itemType, headlineLevel) {
       length: result.length,
       group: result,
       offsets: offsets,
-      html: html,
+      html: textHtml,
+      elementHtml: elementHtml,
     };
   }
   return {
     length: 0,
     group: [],
     offsets: [],
-    html: html
+    html: textHtml,
+    elementHtml: elementHtml,
   };
 }
 

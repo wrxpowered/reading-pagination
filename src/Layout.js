@@ -782,7 +782,7 @@ Layout.prototype = {
     var element = createElement(
       'div',
       { class: item.className },
-      split.html
+      split.elementHtml
     );
     this.dom.viewport.appendChild(element);
     const childNodes = element.querySelectorAll('.word');
